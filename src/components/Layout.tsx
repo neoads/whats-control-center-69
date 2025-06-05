@@ -70,11 +70,23 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
+      {/* Sidebar - sempre visível no desktop, controlada no mobile */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
+      </div>
       
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          onClick={handleSidebarClose}
+        />
+      )}
+      
+      {/* Main content */}
       <div className="flex-1 flex flex-col lg:ml-0">
         <Header onMenuClick={handleMenuClick} />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>
