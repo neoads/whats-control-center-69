@@ -31,33 +31,33 @@ const Login = () => {
   };
 
   return (
-    <Card className="border-border bg-card neon-border">
-      <CardHeader>
-        <CardTitle className="text-center text-xl font-display tracking-wider">ENTRAR</CardTitle>
+    <Card className="border-border bg-card neon-border mx-4 sm:mx-0">
+      <CardHeader className="pb-4 sm:pb-6">
+        <CardTitle className="text-center text-lg sm:text-xl font-display tracking-wider">ENTRAR</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="px-4 sm:px-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email" className="font-display font-medium tracking-wide">EMAIL</Label>
+            <Label htmlFor="email" className="font-display font-medium tracking-wide text-sm sm:text-base">EMAIL</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-input border-border warion-input-focus"
+              className="bg-input border-border warion-input-focus h-10 sm:h-11"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password" className="font-display font-medium tracking-wide">SENHA</Label>
+            <Label htmlFor="password" className="font-display font-medium tracking-wide text-sm sm:text-base">SENHA</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-input border-border pr-10 warion-input-focus"
+                className="bg-input border-border pr-10 warion-input-focus h-10 sm:h-11"
                 required
               />
               <Button
@@ -78,14 +78,20 @@ const Login = () => {
 
           <Button 
             type="submit" 
-            className="w-full warion-button font-display text-sm tracking-widest"
+            className="w-full warion-button font-display text-sm tracking-widest h-10 sm:h-11"
           >
             ENTRAR
           </Button>
         </form>
 
+        <div className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mb-2 font-display">DADOS DE TESTE:</p>
+          <p className="text-xs sm:text-sm">Email: teste@warion.com</p>
+          <p className="text-xs sm:text-sm">Senha: 123456</p>
+        </div>
+
         <div className="mt-4 text-center">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs sm:text-sm text-muted-foreground">
             Não tem uma conta?{' '}
             <button
               onClick={() => navigate('/register')}
