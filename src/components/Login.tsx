@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,36 +24,17 @@ const Login = () => {
     console.log('Tentando fazer login com:', { email, password });
     
     try {
-      // Simulação de login com validação mais flexível
-      await new Promise(resolve => setTimeout(resolve, 300));
+      const { error } = await signIn(email, password);
       
-      // Validação básica: email válido e senha com pelo menos 6 caracteres
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      
-      if (!emailRegex.test(email)) {
-        console.log('Email inválido');
-        toast.error('Por favor, insira um email válido');
-        setIsLoading(false);
+      if (error) {
+        console.error('Erro no login:', error);
+        toast.error(error.message || 'Erro ao fazer login');
         return;
       }
       
-      if (password.length < 6) {
-        console.log('Senha muito curta');
-        toast.error('A senha deve ter pelo menos 6 caracteres');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Se chegou até aqui, o login é válido
       console.log('Login bem-sucedido');
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', email);
       toast.success('Login realizado com sucesso!');
-      
-      // Aguardar um pouco antes de navegar
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 500);
+      navigate('/', { replace: true });
       
     } catch (error) {
       console.error('Erro no login:', error);

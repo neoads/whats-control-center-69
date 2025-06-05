@@ -30,8 +30,8 @@ const Layout = ({ children }: LayoutProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-foreground">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0D0D0D]">
+        <div className="text-white">Carregando...</div>
       </div>
     );
   }
