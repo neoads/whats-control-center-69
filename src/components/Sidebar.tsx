@@ -33,24 +33,24 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
 
   return (
-    <div className="h-full bg-gray-900 border-r border-gray-700 flex flex-col">
+    <div className="h-full bg-[#0D0D0D] border-r border-gray-800 flex flex-col w-64">
       {/* WARION Logo */}
-      <div className="flex items-center gap-3 px-6 py-6 border-b border-gray-700">
-        <div className="flex items-center justify-center w-12 h-12 rounded-xl overflow-hidden">
+      <div className="flex items-center gap-3 px-6 py-6">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
           <img 
             src="/lovable-uploads/ce0047c6-a677-4884-947a-3a6b13a5aa8f.png" 
             alt="WARION Logo" 
             className="w-full h-full object-contain"
           />
         </div>
-        <span className="text-xl font-display font-bold text-white tracking-wider">
-          <span className="text-green-400">WARION</span>
+        <span className="text-lg font-bold text-white tracking-wider">
+          WARION
         </span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6">
-        <ul className="space-y-2">
+      <nav className="flex-1 px-4">
+        <ul className="space-y-1">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
@@ -61,15 +61,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                     onClose();
                   }}
                   className={`
-                    w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                    w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200
                     ${isActive 
-                      ? 'bg-green-500 text-black' 
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-green-400'
+                      ? 'bg-green-500 text-black font-medium' 
+                      : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
                     }
                   `}
                 >
                   <item.icon className="h-5 w-5" />
-                  <div className="text-left">
+                  <div className="text-left flex-1">
                     <div className="font-medium">{item.name}</div>
                     <div className="text-xs opacity-70">{item.description}</div>
                   </div>
@@ -81,31 +81,22 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       </nav>
 
       {/* User info */}
-      <div className="border-t border-gray-700 p-4">
+      <div className="border-t border-gray-800 p-4 mt-auto">
         <div className="flex items-center gap-3 mb-4">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-gray-800 text-green-400 font-bold">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-green-500 text-black font-bold text-sm">
               W
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">
+            <p className="text-sm font-medium text-white">
               WARION ADMIN
             </p>
-            <p className="text-xs text-gray-400 truncate">
+            <p className="text-xs text-gray-400">
               admin@warion.com
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-gray-300 hover:bg-red-600 hover:text-white transition-all duration-200"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="font-medium">LOGOUT</span>
-        </Button>
       </div>
     </div>
   );

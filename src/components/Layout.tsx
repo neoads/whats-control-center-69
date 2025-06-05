@@ -69,9 +69,14 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      {/* Sidebar - sempre visível no desktop, controlada no mobile */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div className="min-h-screen flex w-full bg-[#0D0D0D]">
+      {/* Sidebar - Desktop sempre visível */}
+      <div className="hidden lg:block">
+        <Sidebar isOpen={true} onClose={() => {}} />
+      </div>
+      
+      {/* Sidebar - Mobile com overlay */}
+      <div className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
       </div>
       
@@ -84,9 +89,9 @@ const Layout = ({ children }: LayoutProps) => {
       )}
       
       {/* Main content */}
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col">
         <Header onMenuClick={handleMenuClick} />
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-6 bg-[#0D0D0D]">
           {children}
         </main>
       </div>
