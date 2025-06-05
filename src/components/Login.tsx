@@ -84,12 +84,6 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p className="mb-2 font-display">DADOS DE TESTE:</p>
-          <p>Email: teste@warion.com</p>
-          <p>Senha: 123456</p>
-        </div>
-
         <div className="mt-4 text-center">
           <span className="text-sm text-muted-foreground">
             Não tem uma conta?{' '}
