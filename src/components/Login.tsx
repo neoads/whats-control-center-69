@@ -9,8 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Login = () => {
-  const [email, setEmail] = useState('teste@warion.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -44,16 +44,6 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleEmailClick = () => {
-    navigator.clipboard.writeText('teste@warion.com');
-    toast.success('Email copiado!');
-  };
-
-  const handlePasswordClick = () => {
-    navigator.clipboard.writeText('123456');
-    toast.success('Senha copiada!');
   };
 
   return (
@@ -122,31 +112,6 @@ const Login = () => {
               {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-            <p className="text-center text-white font-semibold mb-3">
-              DADOS DE TESTE:
-            </p>
-            <div className="space-y-2 text-sm">
-              <div 
-                className="flex justify-between items-center p-2 bg-gray-700/50 rounded cursor-pointer hover:bg-gray-700 transition-colors"
-                onClick={handleEmailClick}
-              >
-                <span className="text-gray-300">Email:</span>
-                <span className="text-green-400 font-mono select-all">teste@warion.com</span>
-              </div>
-              <div 
-                className="flex justify-between items-center p-2 bg-gray-700/50 rounded cursor-pointer hover:bg-gray-700 transition-colors"
-                onClick={handlePasswordClick}
-              >
-                <span className="text-gray-300">Senha:</span>
-                <span className="text-green-400 font-mono select-all">123456</span>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 text-center mt-2">
-              Clique para copiar
-            </p>
-          </div>
 
           <div className="text-center pt-4">
             <span className="text-gray-400 text-sm">

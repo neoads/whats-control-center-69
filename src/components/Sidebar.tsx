@@ -44,15 +44,25 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
           />
         )}
       </AnimatePresence>
       
       {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      <motion.div 
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border lg:relative lg:translate-x-0
+        `}
+        initial={false}
+        animate={{ 
+          x: isOpen ? 0 : '-100%' 
+        }}
+        transition={{ 
+          duration: 0.3,
+          ease: [0.25, 0.46, 0.45, 0.94]
+        }}
+      >
         <div className="flex flex-col h-full">
           {/* WARION Logo */}
           <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
@@ -69,20 +79,29 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6">
             <ul className="space-y-2">
-              {navigation.map((item) => {
+              {navigation.map((item, index) => {
                 const isActive = location.pathname === item.href;
                 return (
-                  <li key={item.name}>
+                  <motion.li 
+                    key={item.name}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ 
+                      delay: index * 0.05,
+                      duration: 0.3,
+                      ease: "easeOut"
+                    }}
+                  >
                     <button
                       onClick={() => {
                         navigate(item.href);
                         onClose();
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium font-display tracking-wide transition-all duration-200
+                        w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium font-display tracking-wide transition-all duration-300 ease-in-out
                         ${isActive 
-                          ? 'bg-warion-green text-warion-black' 
-                          : 'text-sidebar-foreground hover:bg-warion-gray hover:text-warion-green'
+                          ? 'bg-warion-green text-warion-black transform scale-105' 
+                          : 'text-sidebar-foreground hover:bg-warion-gray hover:text-warion-green hover:transform hover:scale-102'
                         }
                       `}
                     >
@@ -92,7 +111,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                         <div className="text-xs opacity-70">{item.description}</div>
                       </div>
                     </button>
-                  </li>
+                  </motion.li>
                 );
               })}
             </ul>
@@ -119,14 +138,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-warion-red hover:text-white font-display tracking-widest"
+              className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-warion-red hover:text-white font-display tracking-widest transition-all duration-200"
             >
               <LogOut className="h-4 w-4" />
               <span className="font-medium">LOGOUT</span>
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 };
