@@ -13,7 +13,7 @@ export interface NumeroData {
   mensagens: number;
   ultima_atividade?: string;
   user_id: string;
-  criado_em: string; // Mudado de created_at para criado_em
+  criado_em: string;
 }
 
 export interface ProjetoData {
@@ -21,7 +21,7 @@ export interface ProjetoData {
   nome: string;
   descricao?: string;
   user_id: string;
-  criado_em: string; // Mudado de created_at para criado_em
+  criado_em: string;
 }
 
 export interface ResponsavelData {
@@ -29,7 +29,7 @@ export interface ResponsavelData {
   nome: string;
   email?: string;
   user_id: string;
-  created_at: string; // Esta tabela usa created_at
+  created_at: string;
 }
 
 export interface LinkGrupoData {
@@ -37,7 +37,7 @@ export interface LinkGrupoData {
   nome_grupo: string;
   url: string;
   user_id: string;
-  created_at: string; // Esta tabela usa created_at
+  created_at: string;
 }
 
 export const useSupabaseData = () => {
@@ -83,8 +83,9 @@ export const useSupabaseData = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      setNumeros(numerosData || []);
-      setProjetos(projetosData || []);
+      // Cast the data to proper types
+      setNumeros((numerosData || []) as NumeroData[]);
+      setProjetos((projetosData || []) as ProjetoData[]);
       setResponsaveis(responsaveisData || []);
       setLinksGrupos(linksData || []);
     } catch (error) {
@@ -163,7 +164,7 @@ export const useSupabaseData = () => {
       console.error('Erro ao adicionar número:', error);
       return null;
     }
-    return data;
+    return data as NumeroData;
   };
 
   const addProjeto = async (projeto: Omit<ProjetoData, 'id' | 'user_id' | 'criado_em'>) => {
@@ -179,7 +180,7 @@ export const useSupabaseData = () => {
       console.error('Erro ao adicionar projeto:', error);
       return null;
     }
-    return data;
+    return data as ProjetoData;
   };
 
   const addResponsavel = async (responsavel: Omit<ResponsavelData, 'id' | 'user_id' | 'created_at'>) => {
