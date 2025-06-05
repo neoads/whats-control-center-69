@@ -91,11 +91,11 @@ const Login = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Button 
               type="submit" 
               className="w-full warion-button hover:animate-scale-pulse font-display text-sm tracking-widest"
-              whileTap={{ scale: 0.95 }}
             >
               ENTRAR
             </Button>

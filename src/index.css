@@ -94,11 +94,12 @@
   }
 
   .warion-input-focus {
-    @apply focus:border-warion-green focus:ring-warion-green/20 focus:shadow-neon-green transition-all duration-300;
+    @apply focus:border-warion-green focus:ring-warion-green/20 transition-all duration-300;
   }
 
   .warion-toast {
-    @apply bg-warion-gray border-l-4 border-l-warion-green shadow-neon-green/20;
+    @apply bg-warion-gray border-l-4 border-l-warion-green;
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.2);
   }
 
   .warion-logo-float {
