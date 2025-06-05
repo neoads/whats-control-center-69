@@ -22,15 +22,10 @@ interface GrupoAquecimento {
 }
 
 const mockNumerosAquecimento: NumeroAquecimento[] = [
-  { id: '1', numero: '+5511999887766', descricao: 'Número principal para aquecimento' },
-  { id: '2', numero: '+5511888776655', descricao: 'Backup número 1' },
-  { id: '3', numero: '+5511777665544' },
+  { id: '1', numero: '+551000000', descricao: '-' },
 ];
 
-const mockGruposAquecimento: GrupoAquecimento[] = [
-  { id: '1', nome: 'Grupo Teste Alpha', url: 'https://chat.whatsapp.com/abc123def456' },
-  { id: '2', nome: 'Comunidade Beta', url: 'https://chat.whatsapp.com/def456ghi789' },
-];
+const mockGruposAquecimento: GrupoAquecimento[] = [];
 
 const Aquecimento = () => {
   const [numerosAquecimento, setNumerosAquecimento] = useState<NumeroAquecimento[]>(mockNumerosAquecimento);
@@ -50,7 +45,7 @@ const Aquecimento = () => {
     linhas.forEach(linha => {
       const partes = linha.split('|').map(p => p.trim());
       const numero = partes[0];
-      const descricao = partes[1] || undefined;
+      const descricao = partes[1] || '-';
 
       if (numero) {
         novosNumeros.push({
@@ -127,7 +122,7 @@ const Aquecimento = () => {
   };
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -150,22 +145,27 @@ const Aquecimento = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="numeros" className="space-y-4">
+        <TabsContent value="numeros" className="space-y-6">
           {/* Adicionar Números */}
           <Card>
             <CardHeader>
               <CardTitle>Adicionar Números de Aquecimento</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Digite os números, um por linha, no formato:
-+5511999887766 | Descrição opcional
-+5511888776655 | Outro número
-+5511777665544"
-                value={textAreaNumeros}
-                onChange={(e) => setTextAreaNumeros(e.target.value)}
-                rows={6}
-              />
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Números (um por linha)</p>
+                <Textarea
+                  placeholder="+5511912345678 | Número de teste da campanha X
++5562998765432 | Aquece de novo lote VIP"
+                  value={textAreaNumeros}
+                  onChange={(e) => setTextAreaNumeros(e.target.value)}
+                  rows={8}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Formato: +5511999999999 | Descrição (opcional)
+                </p>
+              </div>
               <Button 
                 onClick={handleSalvarNumeros}
                 className="bg-primary hover:bg-primary/90"
@@ -179,7 +179,12 @@ const Aquecimento = () => {
           {/* Lista de Números */}
           <Card>
             <CardHeader>
-              <CardTitle>Números Cadastrados</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Números Cadastrados ({numerosAquecimento.length})
+                <span className="text-sm font-normal text-muted-foreground">
+                  {numerosAquecimento.length} números
+                </span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {numerosAquecimento.length > 0 ? (
@@ -197,13 +202,13 @@ const Aquecimento = () => {
                       <TableRow key={numero.id}>
                         <TableCell>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleCopiarNumero(numero)}
-                            className={numero.copiado ? 'bg-green-100 border-green-500' : ''}
+                            className={numero.copiado ? 'text-green-500' : 'text-primary'}
                           >
                             {numero.copiado ? (
-                              <Check className="h-4 w-4 text-green-600" />
+                              <Check className="h-4 w-4" />
                             ) : (
                               <Phone className="h-4 w-4" />
                             )}
@@ -211,12 +216,12 @@ const Aquecimento = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
+                            <Phone className="h-4 w-4 text-primary" />
                             <a 
                               href={`https://wa.me/${numero.numero.replace(/[^\d]/g, '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-500 hover:underline"
+                              className="text-primary hover:underline font-mono"
                             >
                               {numero.numero}
                             </a>
@@ -224,7 +229,7 @@ const Aquecimento = () => {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {numero.descricao || 'Sem descrição'}
+                            {numero.descricao}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -232,8 +237,9 @@ const Aquecimento = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoverNumero(numero.id)}
+                            className="text-red-500 hover:text-red-600"
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -241,7 +247,7 @@ const Aquecimento = () => {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-muted-foreground py-4">
+                <p className="text-center text-muted-foreground py-8">
                   Nenhum número de aquecimento cadastrado ainda
                 </p>
               )}
@@ -249,21 +255,27 @@ const Aquecimento = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="grupos" className="space-y-4">
+        <TabsContent value="grupos" className="space-y-6">
           {/* Adicionar Grupos */}
           <Card>
             <CardHeader>
               <CardTitle>Adicionar Links de Grupos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Digite os grupos, um por linha, no formato:
-Nome do Grupo | https://chat.whatsapp.com/abc123def456
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Grupos (um por linha)</p>
+                <Textarea
+                  placeholder="Nome do Grupo | https://chat.whatsapp.com/abc123def456
 Outro Grupo | https://chat.whatsapp.com/def456ghi789"
-                value={textAreaGrupos}
-                onChange={(e) => setTextAreaGrupos(e.target.value)}
-                rows={6}
-              />
+                  value={textAreaGrupos}
+                  onChange={(e) => setTextAreaGrupos(e.target.value)}
+                  rows={8}
+                  className="font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Formato: Nome do Grupo | https://chat.whatsapp.com/...
+                </p>
+              </div>
               <Button 
                 onClick={handleSalvarGrupos}
                 className="bg-primary hover:bg-primary/90"
@@ -277,7 +289,7 @@ Outro Grupo | https://chat.whatsapp.com/def456ghi789"
           {/* Lista de Grupos */}
           <Card>
             <CardHeader>
-              <CardTitle>Grupos Cadastrados</CardTitle>
+              <CardTitle>Grupos Cadastrados ({gruposAquecimento.length})</CardTitle>
             </CardHeader>
             <CardContent>
               {gruposAquecimento.length > 0 ? (
@@ -294,7 +306,7 @@ Outro Grupo | https://chat.whatsapp.com/def456ghi789"
                       <TableRow key={grupo.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
+                            <Users className="h-4 w-4 text-primary" />
                             <span className="font-medium">{grupo.nome}</span>
                           </div>
                         </TableCell>
@@ -303,10 +315,10 @@ Outro Grupo | https://chat.whatsapp.com/def456ghi789"
                             href={grupo.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-blue-500 hover:underline"
+                            className="flex items-center gap-2 text-primary hover:underline"
                           >
                             <LinkIcon className="h-4 w-4" />
-                            <span className="truncate max-w-xs">{grupo.url}</span>
+                            <span className="truncate max-w-xs font-mono text-sm">{grupo.url}</span>
                           </a>
                         </TableCell>
                         <TableCell>
@@ -314,8 +326,9 @@ Outro Grupo | https://chat.whatsapp.com/def456ghi789"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoverGrupo(grupo.id)}
+                            className="text-red-500 hover:text-red-600"
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -323,7 +336,7 @@ Outro Grupo | https://chat.whatsapp.com/def456ghi789"
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-muted-foreground py-4">
+                <p className="text-center text-muted-foreground py-8">
                   Nenhum grupo cadastrado ainda
                 </p>
               )}

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Phone, Plus, Search, Filter, Eye, Edit, Trash2, MoreHorizontal, PhoneOff, AlertTriangle, CheckCircle, Zap, Clock } from 'lucide-react';
+import { Phone, Plus, Search, Filter, Eye, Edit, Trash2, CheckCircle, PhoneOff, AlertTriangle, Zap, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,9 +24,7 @@ interface Numero {
 }
 
 const mockNumeros: Numero[] = [
-  { id: '1', numero: '+5511999887766', status: 'Ativo', projeto: 'Projeto Alpha', responsavel: 'João Silva', dispositivo: 'Celular', mensagens: 1523, ultimaAtividade: '2h atrás' },
-  { id: '2', numero: '+5511888776655', status: 'Aquecendo', projeto: 'Projeto Beta', responsavel: 'Maria Santos', dispositivo: 'Emulador', mensagens: 45, ultimaAtividade: '30min atrás' },
-  { id: '3', numero: '+5511777665544', status: 'Suspenso', projeto: 'Projeto Gamma', responsavel: 'Pedro Costa', dispositivo: 'Celular', mensagens: 892, ultimaAtividade: '1 dia atrás' },
+  { id: '1', numero: '+55 31 8297-7059', status: 'Ativo', projeto: 'TESTE', responsavel: 'SLS', dispositivo: 'Emulador', mensagens: 0, ultimaAtividade: 'Agora' },
 ];
 
 const statusConfig = {
@@ -74,13 +72,40 @@ const Numeros = () => {
     toast.success('Número adicionado com sucesso!');
   };
 
+  const handleEditNumero = () => {
+    if (!numeroSelecionado) return;
+    
+    const numerosAtualizados = numeros.map(n => 
+      n.id === numeroSelecionado.id 
+        ? { ...numeroSelecionado, ...novoNumero }
+        : n
+    );
+    
+    setNumeros(numerosAtualizados);
+    setModalEdit(false);
+    setNumeroSelecionado(null);
+    toast.success('Número atualizado com sucesso!');
+  };
+
   const handleDeleteNumero = (id: string) => {
     setNumeros(numeros.filter(n => n.id !== id));
     toast.success('Número removido com sucesso!');
   };
 
+  const openEditModal = (numero: Numero) => {
+    setNumeroSelecionado(numero);
+    setNovoNumero({
+      numero: numero.numero,
+      projeto: numero.projeto,
+      responsavel: numero.responsavel,
+      dispositivo: numero.dispositivo,
+      status: numero.status
+    });
+    setModalEdit(true);
+  };
+
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
+    <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Números WhatsApp</h2>
@@ -98,63 +123,62 @@ const Numeros = () => {
               <DialogTitle>Adicionar Novo Número</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numero" className="text-right">Número</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="numero">Número WhatsApp *</Label>
                 <Input
                   id="numero"
                   value={novoNumero.numero}
                   onChange={(e) => setNovoNumero({...novoNumero, numero: e.target.value})}
-                  placeholder="+5511999887766"
-                  className="col-span-3"
+                  placeholder="+55 31 8297-7059"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="projeto" className="text-right">Projeto</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="projeto">Projeto *</Label>
                 <Select onValueChange={(value) => setNovoNumero({...novoNumero, projeto: value})}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione um projeto" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="TESTE">TESTE</SelectItem>
                     <SelectItem value="Projeto Alpha">Projeto Alpha</SelectItem>
                     <SelectItem value="Projeto Beta">Projeto Beta</SelectItem>
-                    <SelectItem value="Projeto Gamma">Projeto Gamma</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="responsavel" className="text-right">Responsável</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="responsavel">Responsável *</Label>
                 <Select onValueChange={(value) => setNovoNumero({...novoNumero, responsavel: value})}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione um responsável" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="SLS">SLS</SelectItem>
                     <SelectItem value="João Silva">João Silva</SelectItem>
                     <SelectItem value="Maria Santos">Maria Santos</SelectItem>
-                    <SelectItem value="Pedro Costa">Pedro Costa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dispositivo" className="text-right">Dispositivo</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="dispositivo">Dispositivo *</Label>
                 <Select onValueChange={(value) => setNovoNumero({...novoNumero, dispositivo: value as 'Celular' | 'Emulador'})}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione o dispositivo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Celular">Celular</SelectItem>
                     <SelectItem value="Emulador">Emulador</SelectItem>
+                    <SelectItem value="Celular">Celular</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status</Label>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
                 <Select onValueChange={(value) => setNovoNumero({...novoNumero, status: value as Numero['status']})}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger>
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Aquecendo">Aquecendo</SelectItem>
                     <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Aquecendo">Aquecendo</SelectItem>
                     <SelectItem value="API">API</SelectItem>
                     <SelectItem value="Inativo">Inativo</SelectItem>
                     <SelectItem value="Suspenso">Suspenso</SelectItem>
@@ -196,7 +220,7 @@ const Numeros = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar números, projetos..."
+                  placeholder="Buscar números..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   className="pl-10"
@@ -212,12 +236,14 @@ const Numeros = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            Lista de Números
-            <Badge variant="secondary" className="ml-2">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Lista de Números ({numerosFiltrados.length})
+            </span>
+            <span className="text-sm font-normal text-muted-foreground">
               {numerosFiltrados.length} de {numeros.length}
-            </Badge>
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -269,7 +295,11 @@ const Numeros = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => openEditModal(numero)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
@@ -310,51 +340,165 @@ const Numeros = () => {
       <Dialog open={modalDetails} onOpenChange={setModalDetails}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Detalhes do Número</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Detalhes do Número
+            </DialogTitle>
           </DialogHeader>
           {numeroSelecionado && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Número</Label>
-                  <p className="text-sm text-muted-foreground">{numeroSelecionado.numero}</p>
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Badge className={statusConfig[numeroSelecionado.status].textColor}>
-                    {numeroSelecionado.status}
-                  </Badge>
-                </div>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">{numeroSelecionado.numero}</h3>
+                <Badge 
+                  variant="outline"
+                  className={`${statusConfig[numeroSelecionado.status].textColor} border-current`}
+                >
+                  {numeroSelecionado.status}
+                </Badge>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Projeto</Label>
-                  <p className="text-sm text-muted-foreground">{numeroSelecionado.projeto}</p>
+              
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
+                        📁
+                      </div>
+                      Projeto
+                    </Label>
+                    <p className="text-sm font-medium">{numeroSelecionado.projeto}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
+                        👤
+                      </div>
+                      Responsável
+                    </Label>
+                    <p className="text-sm font-medium">{numeroSelecionado.responsavel}</p>
+                  </div>
                 </div>
-                <div>
-                  <Label>Responsável</Label>
-                  <p className="text-sm text-muted-foreground">{numeroSelecionado.responsavel}</p>
+                
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
+                      📱
+                    </div>
+                    Dispositivo
+                  </Label>
+                  <p className="text-sm font-medium">{numeroSelecionado.dispositivo}</p>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Dispositivo</Label>
-                  <p className="text-sm text-muted-foreground">{numeroSelecionado.dispositivo}</p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
+                        💬
+                      </div>
+                      Mensagens
+                    </Label>
+                    <p className="text-2xl font-bold">{numeroSelecionado.mensagens}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
+                        🕒
+                      </div>
+                      Última Atividade
+                    </Label>
+                    <p className="text-sm font-medium">{numeroSelecionado.ultimaAtividade}</p>
+                  </div>
                 </div>
-                <div>
-                  <Label>Mensagens</Label>
-                  <p className="text-sm text-muted-foreground">{numeroSelecionado.mensagens}</p>
-                </div>
-              </div>
-              <div>
-                <Label>Última Atividade</Label>
-                <p className="text-sm text-muted-foreground">{numeroSelecionado.ultimaAtividade}</p>
               </div>
             </div>
           )}
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setModalDetails(false)}>
               Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição */}
+      <Dialog open={modalEdit} onOpenChange={setModalEdit}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Número</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Atualize as informações do número WhatsApp.
+            </p>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-numero">Número WhatsApp *</Label>
+              <Input
+                id="edit-numero"
+                value={novoNumero.numero}
+                onChange={(e) => setNovoNumero({...novoNumero, numero: e.target.value})}
+                placeholder="+55 31 8297-7059"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-projeto">Projeto *</Label>
+              <Select value={novoNumero.projeto} onValueChange={(value) => setNovoNumero({...novoNumero, projeto: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TESTE">TESTE</SelectItem>
+                  <SelectItem value="Projeto Alpha">Projeto Alpha</SelectItem>
+                  <SelectItem value="Projeto Beta">Projeto Beta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-responsavel">Responsável *</Label>
+              <Select value={novoNumero.responsavel} onValueChange={(value) => setNovoNumero({...novoNumero, responsavel: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SLS">SLS</SelectItem>
+                  <SelectItem value="João Silva">João Silva</SelectItem>
+                  <SelectItem value="Maria Santos">Maria Santos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-dispositivo">Dispositivo *</Label>
+              <Select value={novoNumero.dispositivo} onValueChange={(value) => setNovoNumero({...novoNumero, dispositivo: value as 'Celular' | 'Emulador'})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o dispositivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Emulador">Emulador</SelectItem>
+                  <SelectItem value="Celular">Celular</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={novoNumero.status} onValueChange={(value) => setNovoNumero({...novoNumero, status: value as Numero['status']})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Aquecendo">Aquecendo</SelectItem>
+                  <SelectItem value="API">API</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                  <SelectItem value="Suspenso">Suspenso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setModalEdit(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditNumero} className="bg-blue-600 hover:bg-blue-700">
+              Salvar Alterações
             </Button>
           </div>
         </DialogContent>
