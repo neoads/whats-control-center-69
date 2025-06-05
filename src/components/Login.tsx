@@ -22,22 +22,37 @@ const Login = () => {
     console.log('Tentando fazer login com:', { email, password });
     
     try {
-      // Simulação de login com delay menor
+      // Simulação de login com validação mais flexível
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      if (email === 'teste@warion.com' && password === '123456') {
-        console.log('Login bem-sucedido');
-        localStorage.setItem('isLoggedIn', 'true');
-        toast.success('Login realizado com sucesso!');
-        
-        // Aguardar um pouco antes de navegar
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 500);
-      } else {
-        console.log('Credenciais incorretas');
-        toast.error('Email ou senha incorretos');
+      // Validação básica: email válido e senha com pelo menos 6 caracteres
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (!emailRegex.test(email)) {
+        console.log('Email inválido');
+        toast.error('Por favor, insira um email válido');
+        setIsLoading(false);
+        return;
       }
+      
+      if (password.length < 6) {
+        console.log('Senha muito curta');
+        toast.error('A senha deve ter pelo menos 6 caracteres');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Se chegou até aqui, o login é válido
+      console.log('Login bem-sucedido');
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userEmail', email);
+      toast.success('Login realizado com sucesso!');
+      
+      // Aguardar um pouco antes de navegar
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 500);
+      
     } catch (error) {
       console.error('Erro no login:', error);
       toast.error('Erro ao fazer login');
