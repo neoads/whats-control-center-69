@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 const Login = () => {
   const [email, setEmail] = useState('teste@warion.com');
@@ -22,107 +22,147 @@ const Login = () => {
     console.log('Tentando fazer login com:', { email, password });
     
     try {
-      // Simulação de login com delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Simulação de login com delay menor
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       if (email === 'teste@warion.com' && password === '123456') {
         console.log('Login bem-sucedido');
         localStorage.setItem('isLoggedIn', 'true');
-        toast('Login realizado com sucesso!');
+        toast.success('Login realizado com sucesso!');
         
-        // Navegar para a página principal
-        navigate('/', { replace: true });
-        window.location.reload(); // Força o reload para garantir que o estado seja atualizado
+        // Aguardar um pouco antes de navegar
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 500);
       } else {
         console.log('Credenciais incorretas');
-        toast('Email ou senha incorretos');
+        toast.error('Email ou senha incorretos');
       }
     } catch (error) {
       console.error('Erro no login:', error);
-      toast('Erro ao fazer login');
+      toast.error('Erro ao fazer login');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleEmailClick = () => {
+    navigator.clipboard.writeText('teste@warion.com');
+    toast.success('Email copiado!');
+  };
+
+  const handlePasswordClick = () => {
+    navigator.clipboard.writeText('123456');
+    toast.success('Senha copiada!');
+  };
+
   return (
-    <Card className="border-border bg-card neon-border mx-4 sm:mx-0">
-      <CardHeader className="pb-4 sm:pb-6">
-        <CardTitle className="text-center text-lg sm:text-xl font-display tracking-wider">ENTRAR</CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 sm:px-6">
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="font-display font-medium tracking-wide text-sm sm:text-base">EMAIL</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-input border-border warion-input-focus h-10 sm:h-11"
-              required
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password" className="font-display font-medium tracking-wide text-sm sm:text-base">SENHA</Label>
-            <div className="relative">
+    <div className="w-full max-w-md mx-auto">
+      <Card className="border border-gray-700 bg-gray-900/80 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-xl font-bold text-white tracking-wider">
+            ENTRAR
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white font-medium">
+                EMAIL
+              </Label>
               <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-input border-border pr-10 warion-input-focus h-10 sm:h-11"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-gray-800 border-gray-600 text-white focus:border-green-500 focus:ring-green-500/20"
                 required
                 disabled={isLoading}
+                placeholder="Digite seu email"
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent hover:text-warion-blue"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
             </div>
-          </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-white font-medium">
+                SENHA
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-gray-800 border-gray-600 text-white focus:border-green-500 focus:ring-green-500/20 pr-12"
+                  required
+                  disabled={isLoading}
+                  placeholder="Digite sua senha"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-700 text-gray-400 hover:text-white z-10"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
 
-          <Button 
-            type="submit" 
-            className="w-full warion-button font-display text-sm tracking-widest h-10 sm:h-11"
-            disabled={isLoading}
-          >
-            {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p className="mb-2 font-display">DADOS DE TESTE:</p>
-          <p className="text-xs sm:text-sm">Email: teste@warion.com</p>
-          <p className="text-xs sm:text-sm">Senha: 123456</p>
-        </div>
-
-        <div className="mt-4 text-center">
-          <span className="text-xs sm:text-sm text-muted-foreground">
-            Não tem uma conta?{' '}
-            <button
-              onClick={() => navigate('/register')}
-              className="text-warion-blue hover:text-warion-green transition-colors duration-200 font-display tracking-wide"
+            <Button 
+              type="submit" 
+              className="w-full bg-green-500 hover:bg-green-600 text-black font-bold py-3 text-sm tracking-wider transition-all duration-200 hover:scale-105"
               disabled={isLoading}
             >
-              CADASTRE-SE
-            </button>
-          </span>
-        </div>
-      </CardContent>
-    </Card>
+              {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
+            </Button>
+          </form>
+
+          <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p className="text-center text-white font-semibold mb-3">
+              DADOS DE TESTE:
+            </p>
+            <div className="space-y-2 text-sm">
+              <div 
+                className="flex justify-between items-center p-2 bg-gray-700/50 rounded cursor-pointer hover:bg-gray-700 transition-colors"
+                onClick={handleEmailClick}
+              >
+                <span className="text-gray-300">Email:</span>
+                <span className="text-green-400 font-mono select-all">teste@warion.com</span>
+              </div>
+              <div 
+                className="flex justify-between items-center p-2 bg-gray-700/50 rounded cursor-pointer hover:bg-gray-700 transition-colors"
+                onClick={handlePasswordClick}
+              >
+                <span className="text-gray-300">Senha:</span>
+                <span className="text-green-400 font-mono select-all">123456</span>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 text-center mt-2">
+              Clique para copiar
+            </p>
+          </div>
+
+          <div className="text-center pt-4">
+            <span className="text-gray-400 text-sm">
+              Não tem uma conta?{' '}
+              <button
+                onClick={() => navigate('/register')}
+                className="text-green-400 hover:text-green-300 font-semibold transition-colors duration-200 underline cursor-pointer"
+                disabled={isLoading}
+              >
+                CADASTRE-SE
+              </button>
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
