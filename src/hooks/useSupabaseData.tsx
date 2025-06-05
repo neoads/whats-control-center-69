@@ -13,7 +13,7 @@ export interface NumeroData {
   mensagens: number;
   ultima_atividade?: string;
   user_id: string;
-  created_at: string;
+  criado_em: string; // Mudado de created_at para criado_em
 }
 
 export interface ProjetoData {
@@ -21,7 +21,7 @@ export interface ProjetoData {
   nome: string;
   descricao?: string;
   user_id: string;
-  created_at: string;
+  criado_em: string; // Mudado de created_at para criado_em
 }
 
 export interface ResponsavelData {
@@ -29,7 +29,7 @@ export interface ResponsavelData {
   nome: string;
   email?: string;
   user_id: string;
-  created_at: string;
+  created_at: string; // Esta tabela usa created_at
 }
 
 export interface LinkGrupoData {
@@ -37,7 +37,7 @@ export interface LinkGrupoData {
   nome_grupo: string;
   url: string;
   user_id: string;
-  created_at: string;
+  created_at: string; // Esta tabela usa created_at
 }
 
 export const useSupabaseData = () => {
@@ -60,14 +60,14 @@ export const useSupabaseData = () => {
         .from('numeros')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('criado_em', { ascending: false });
 
       // Carregar projetos
       const { data: projetosData } = await supabase
         .from('projetos')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('criado_em', { ascending: false });
 
       // Carregar responsáveis
       const { data: responsaveisData } = await supabase
@@ -150,7 +150,7 @@ export const useSupabaseData = () => {
   }, [user]);
 
   // Funções para manipular dados
-  const addNumero = async (numero: Omit<NumeroData, 'id' | 'user_id' | 'created_at'>) => {
+  const addNumero = async (numero: Omit<NumeroData, 'id' | 'user_id' | 'criado_em'>) => {
     if (!user) return null;
 
     const { data, error } = await supabase
@@ -166,7 +166,7 @@ export const useSupabaseData = () => {
     return data;
   };
 
-  const addProjeto = async (projeto: Omit<ProjetoData, 'id' | 'user_id' | 'created_at'>) => {
+  const addProjeto = async (projeto: Omit<ProjetoData, 'id' | 'user_id' | 'criado_em'>) => {
     if (!user) return null;
 
     const { data, error } = await supabase
