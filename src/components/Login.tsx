@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
 
 const Login = () => {
   const [email, setEmail] = useState('teste@warion.com');
@@ -38,12 +37,7 @@ const Login = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <motion.div 
-            className="space-y-2"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
+          <div className="space-y-2">
             <Label htmlFor="email" className="font-display font-medium tracking-wide">EMAIL</Label>
             <Input
               id="email"
@@ -53,14 +47,9 @@ const Login = () => {
               className="bg-input border-border warion-input-focus"
               required
             />
-          </motion.div>
+          </div>
           
-          <motion.div 
-            className="space-y-2"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <div className="space-y-2">
             <Label htmlFor="password" className="font-display font-medium tracking-wide">SENHA</Label>
             <div className="relative">
               <Input
@@ -85,50 +74,33 @@ const Login = () => {
                 )}
               </Button>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            whileTap={{ scale: 0.95 }}
+          <Button 
+            type="submit" 
+            className="w-full warion-button font-display text-sm tracking-widest"
           >
-            <Button 
-              type="submit" 
-              className="w-full warion-button hover:animate-scale-pulse font-display text-sm tracking-widest"
-            >
-              ENTRAR
-            </Button>
-          </motion.div>
+            ENTRAR
+          </Button>
         </form>
 
-        <motion.div 
-          className="mt-6 text-center text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           <p className="mb-2 font-display">DADOS DE TESTE:</p>
           <p>Email: teste@warion.com</p>
           <p>Senha: 123456</p>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          className="mt-4 text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
+        <div className="mt-4 text-center">
           <span className="text-sm text-muted-foreground">
             Não tem uma conta?{' '}
             <button
               onClick={() => navigate('/register')}
-              className="text-warion-blue hover:text-warion-green transition-colors duration-200 font-display tracking-wide hover:animate-bounce-subtle"
+              className="text-warion-blue hover:text-warion-green transition-colors duration-200 font-display tracking-wide"
             >
               CADASTRE-SE
             </button>
           </span>
-        </motion.div>
+        </div>
       </CardContent>
     </Card>
   );

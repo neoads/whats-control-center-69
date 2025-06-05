@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -78,11 +77,11 @@
   }
 
   .warion-button-secondary {
-    @apply bg-warion-blue hover:bg-warion-blue/90 text-warion-white font-medium tracking-widest uppercase transition-all duration-200 hover:scale-105 hover:shadow-neon-blue animate-cyber-glow;
+    @apply bg-warion-blue hover:bg-warion-blue/90 text-warion-white font-medium tracking-widest uppercase transition-all duration-200 hover:scale-105 hover:shadow-neon-blue;
   }
 
   .warion-button-danger {
-    @apply bg-warion-red hover:bg-warion-red/90 text-warion-white font-medium tracking-widest uppercase transition-all duration-200 hover:animate-shake-micro hover:shadow-neon-red;
+    @apply bg-warion-red hover:bg-warion-red/90 text-warion-white font-medium tracking-widest uppercase transition-all duration-200;
   }
 
   .warion-card {
