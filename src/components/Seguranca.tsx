@@ -51,7 +51,9 @@ const Seguranca = () => {
       toast.error('Código PIN deve ter entre 4 e 8 caracteres');
       return;
     }
-    toast.success('Configuração de segurança salva!');
+    
+    // Open modal to save configuration
+    setModalSalvarConfig(true);
   };
 
   const handleSalvarConfiguracao = () => {
@@ -72,7 +74,7 @@ const Seguranca = () => {
     setConfigsSalvas([...configsSalvas, novaConfig]);
     setModalSalvarConfig(false);
     setNomeConfig('');
-    toast.success('Configuração salva com sucesso!');
+    toast.success(`Configuração salva com sucesso como '${nomeConfig}'`);
   };
 
   const handleCarregarConfig = (config: ConfigSalva) => {
@@ -195,6 +197,34 @@ const Seguranca = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Modal para Salvar Configuração */}
+      <Dialog open={modalSalvarConfig} onOpenChange={setModalSalvarConfig}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Salvar Configuração</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="nome-configuracao">Nome da Configuração *</Label>
+              <Input
+                id="nome-configuracao"
+                value={nomeConfig}
+                onChange={(e) => setNomeConfig(e.target.value)}
+                placeholder="Digite um nome para esta configuração"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setModalSalvarConfig(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSalvarConfiguracao}>
+              Salvar e Aplicar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Configurações Salvas */}
       <Card>
