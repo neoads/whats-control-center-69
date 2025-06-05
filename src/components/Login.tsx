@@ -6,27 +6,42 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 const Login = () => {
   const [email, setEmail] = useState('teste@warion.com');
   const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulação de login
-    if (email === 'teste@warion.com' && password === '123456') {
-      localStorage.setItem('isLoggedIn', 'true');
-      toast.success('Login realizado com sucesso!', {
-        className: 'warion-toast'
-      });
-      navigate('/');
-    } else {
-      toast.error('Email ou senha incorretos', {
-        className: 'bg-warion-gray border-l-4 border-l-warion-red'
-      });
+    setIsLoading(true);
+    
+    console.log('Tentando fazer login com:', { email, password });
+    
+    try {
+      // Simulação de login com delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (email === 'teste@warion.com' && password === '123456') {
+        console.log('Login bem-sucedido');
+        localStorage.setItem('isLoggedIn', 'true');
+        toast('Login realizado com sucesso!');
+        
+        // Navegar para a página principal
+        navigate('/', { replace: true });
+        window.location.reload(); // Força o reload para garantir que o estado seja atualizado
+      } else {
+        console.log('Credenciais incorretas');
+        toast('Email ou senha incorretos');
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      toast('Erro ao fazer login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,6 +61,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="bg-input border-border warion-input-focus h-10 sm:h-11"
               required
+              disabled={isLoading}
             />
           </div>
           
@@ -59,6 +75,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-input border-border pr-10 warion-input-focus h-10 sm:h-11"
                 required
+                disabled={isLoading}
               />
               <Button
                 type="button"
@@ -66,6 +83,7 @@ const Login = () => {
                 size="sm"
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent hover:text-warion-blue"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -79,8 +97,9 @@ const Login = () => {
           <Button 
             type="submit" 
             className="w-full warion-button font-display text-sm tracking-widest h-10 sm:h-11"
+            disabled={isLoading}
           >
-            ENTRAR
+            {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
           </Button>
         </form>
 
@@ -96,6 +115,7 @@ const Login = () => {
             <button
               onClick={() => navigate('/register')}
               className="text-warion-blue hover:text-warion-green transition-colors duration-200 font-display tracking-wide"
+              disabled={isLoading}
             >
               CADASTRE-SE
             </button>

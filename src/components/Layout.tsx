@@ -10,15 +10,43 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-      navigate('/login');
-    }
-  }, [navigate, location]);
+    console.log('Verificando autenticação...');
+    const checkAuth = () => {
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      console.log('Status de login no localStorage:', isLoggedIn);
+      
+      if (isLoggedIn === 'true') {
+        console.log('Usuário autenticado');
+        setIsAuthenticated(true);
+      } else {
+        console.log('Usuário não autenticado, redirecionando para login');
+        navigate('/login', { replace: true });
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, [navigate, location.pathname]);
+
+  // Adicionar listener para mudanças no localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      if (isLoggedIn !== 'true') {
+        setIsAuthenticated(false);
+        navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [navigate]);
 
   const handleMenuClick = () => {
     setSidebarOpen(!sidebarOpen);
@@ -27,6 +55,18 @@ const Layout = ({ children }: LayoutProps) => {
   const handleSidebarClose = () => {
     setSidebarOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // O useEffect já está redirecionando
+  }
 
   return (
     <div className="min-h-screen flex w-full bg-background">
