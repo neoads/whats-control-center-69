@@ -16,7 +16,9 @@ export type Database = {
           email_recuperacao: string | null
           id: string
           mensagem: string | null
+          mensagem_recuperacao: string | null
           nome: string
+          nome_config: string | null
           user_id: string | null
         }
         Insert: {
@@ -25,7 +27,9 @@ export type Database = {
           email_recuperacao?: string | null
           id?: string
           mensagem?: string | null
+          mensagem_recuperacao?: string | null
           nome: string
+          nome_config?: string | null
           user_id?: string | null
         }
         Update: {
@@ -34,10 +38,44 @@ export type Database = {
           email_recuperacao?: string | null
           id?: string
           mensagem?: string | null
+          mensagem_recuperacao?: string | null
           nome?: string
+          nome_config?: string | null
           user_id?: string | null
         }
         Relationships: []
+      }
+      emails_dispositivos: {
+        Row: {
+          autorizado: boolean | null
+          created_at: string | null
+          email: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          autorizado?: boolean | null
+          created_at?: string | null
+          email: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          autorizado?: boolean | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_dispositivos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       grupos: {
         Row: {
@@ -62,6 +100,38 @@ export type Database = {
           url?: string | null
         }
         Relationships: []
+      }
+      links_grupos: {
+        Row: {
+          created_at: string | null
+          id: string
+          nome_grupo: string
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nome_grupo: string
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nome_grupo?: string
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "links_grupos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       logs_usuarios: {
         Row: {
@@ -104,6 +174,7 @@ export type Database = {
           responsavel_id: string | null
           status: string | null
           ultima_atividade: string | null
+          user_id: string | null
         }
         Insert: {
           criado_em?: string | null
@@ -115,6 +186,7 @@ export type Database = {
           responsavel_id?: string | null
           status?: string | null
           ultima_atividade?: string | null
+          user_id?: string | null
         }
         Update: {
           criado_em?: string | null
@@ -126,6 +198,7 @@ export type Database = {
           responsavel_id?: string | null
           status?: string | null
           ultima_atividade?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -133,6 +206,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numeros_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
             referencedColumns: ["id"]
           },
         ]
@@ -144,6 +224,7 @@ export type Database = {
           descricao: string | null
           id: string
           numero: string
+          user_id: string | null
         }
         Insert: {
           criado_em?: string | null
@@ -151,6 +232,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           numero: string
+          user_id?: string | null
         }
         Update: {
           criado_em?: string | null
@@ -158,8 +240,17 @@ export type Database = {
           descricao?: string | null
           id?: string
           numero?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "numeros_aquecimento_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       phone_numbers: {
         Row: {
@@ -281,6 +372,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          user_id: string | null
         }
         Insert: {
           criado_em?: string | null
@@ -288,6 +380,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          user_id?: string | null
         }
         Update: {
           criado_em?: string | null
@@ -295,8 +388,49 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projetos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      responsaveis: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          nome: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responsaveis_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_settings: {
         Row: {
@@ -343,6 +477,27 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string | null
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          nome?: string
         }
         Relationships: []
       }

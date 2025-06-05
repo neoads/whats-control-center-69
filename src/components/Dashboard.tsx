@@ -5,30 +5,50 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const Dashboard = () => {
+  const { numeros, projetos, responsaveis, linksGrupos, loading } = useSupabaseData();
+
+  // Calcular estatísticas dos dados reais
   const stats = [
-    { title: 'Total de Números', value: '24', icon: Phone },
-    { title: 'Projetos Ativos', value: '8', icon: FolderOpen },
-    { title: 'Responsáveis', value: '12', icon: Users },
-    { title: 'Grupos Salvos', value: '5', icon: MessageSquare },
+    { title: 'Total de Números', value: numeros.length.toString(), icon: Phone },
+    { title: 'Projetos Ativos', value: projetos.length.toString(), icon: FolderOpen },
+    { title: 'Responsáveis', value: responsaveis.length.toString(), icon: Users },
+    { title: 'Grupos Salvos', value: linksGrupos.length.toString(), icon: MessageSquare },
   ];
+
+  // Calcular distribuição por status
+  const statusCounts = numeros.reduce((acc, numero) => {
+    acc[numero.status] = (acc[numero.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   const statusData = [
-    { status: 'Ativo', count: 12, icon: CheckCircle, color: 'bg-green-500' },
-    { status: 'API', count: 5, icon: Zap, color: 'bg-blue-500' },
-    { status: 'Aquecendo', count: 4, icon: Clock, color: 'bg-yellow-500' },
-    { status: 'Inativo', count: 2, icon: XCircle, color: 'bg-gray-500' },
-    { status: 'Suspenso', count: 1, icon: AlertTriangle, color: 'bg-red-500' },
+    { status: 'Ativo', count: statusCounts.ativo || 0, icon: CheckCircle, color: 'bg-green-500' },
+    { status: 'API', count: statusCounts.api || 0, icon: Zap, color: 'bg-blue-500' },
+    { status: 'Aquecendo', count: statusCounts.aquecendo || 0, icon: Clock, color: 'bg-yellow-500' },
+    { status: 'Inativo', count: statusCounts.inativo || 0, icon: XCircle, color: 'bg-gray-500' },
+    { status: 'Suspenso', count: statusCounts.suspenso || 0, icon: AlertTriangle, color: 'bg-red-500' },
   ];
 
-  const recentNumbers = [
-    { number: '+55 11 99999-9999', project: 'Campanha Verão', status: 'Ativo', statusColor: 'bg-green-500' },
-    { number: '+55 11 88888-8888', project: 'Black Friday', status: 'API', statusColor: 'bg-blue-500' },
-    { number: '+55 11 77777-7777', project: 'Lançamento', status: 'Aquecendo', statusColor: 'bg-yellow-500' },
-    { number: '+55 11 66666-6666', project: 'Suporte', status: 'Ativo', statusColor: 'bg-green-500' },
-    { number: '+55 11 55555-5555', project: 'Vendas', status: 'Inativo', statusColor: 'bg-gray-500' },
-  ];
+  // Últimos números adicionados
+  const recentNumbers = numeros.slice(0, 5).map(numero => ({
+    number: numero.numero,
+    project: projetos.find(p => p.id === numero.projeto_id)?.nome || 'Sem projeto',
+    status: numero.status,
+    statusColor: statusData.find(s => s.status.toLowerCase() === numero.status)?.color || 'bg-gray-500'
+  }));
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -125,7 +145,7 @@ const Dashboard = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${item.statusColor}`} />
-                        <Badge variant="outline" className="text-xs font-display">
+                        <Badge variant="outline" className="text-xs font-display capitalize">
                           {item.status}
                         </Badge>
                       </div>

@@ -10,50 +10,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-
-interface Usuario {
-  id: string;
-  nome: string;
-  email?: string;
-}
-
-const mockUsuarios: Usuario[] = [
-  { id: '1', nome: 'João Silva', email: 'joao@exemplo.com' },
-  { id: '2', nome: 'Maria Santos', email: 'maria@exemplo.com' },
-  { id: '3', nome: 'Pedro Costa', email: 'pedro@exemplo.com' },
-];
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const Usuarios = () => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios);
+  const { responsaveis, loading, addResponsavel, deleteResponsavel, updateResponsavel } = useSupabaseData();
   const [busca, setBusca] = useState('');
   const [modalAdd, setModalAdd] = useState(false);
   const [modalEdit, setModalEdit] = useState(false);
-  const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<any>(null);
   const [novoUsuario, setNovoUsuario] = useState({ nome: '', email: '' });
 
-  const usuariosFiltrados = usuarios.filter(usuario =>
+  const usuariosFiltrados = responsaveis.filter(usuario =>
     usuario.nome.toLowerCase().includes(busca.toLowerCase()) ||
     (usuario.email && usuario.email.toLowerCase().includes(busca.toLowerCase()))
   );
 
-  const handleAddUsuario = () => {
+  const handleAddUsuario = async () => {
     if (novoUsuario.nome.length < 2) {
       toast.error('Nome do responsável deve ter pelo menos 2 caracteres');
       return;
     }
     
-    const usuario: Usuario = {
-      id: Date.now().toString(),
+    const result = await addResponsavel({
       nome: novoUsuario.nome,
       email: novoUsuario.email || undefined
-    };
-    setUsuarios([...usuarios, usuario]);
-    setModalAdd(false);
-    setNovoUsuario({ nome: '', email: '' });
-    toast.success('Usuário adicionado com sucesso!');
+    });
+
+    if (result) {
+      setModalAdd(false);
+      setNovoUsuario({ nome: '', email: '' });
+      toast.success('Usuário adicionado com sucesso!');
+    } else {
+      toast.error('Erro ao adicionar usuário');
+    }
   };
 
-  const handleEditUsuario = () => {
+  const handleEditUsuario = async () => {
     if (!usuarioSelecionado) return;
     
     if (novoUsuario.nome.length < 2) {
@@ -61,21 +53,39 @@ const Usuarios = () => {
       return;
     }
 
-    setUsuarios(usuarios.map(u => 
-      u.id === usuarioSelecionado.id 
-        ? { ...u, nome: novoUsuario.nome, email: novoUsuario.email || undefined }
-        : u
-    ));
-    setModalEdit(false);
-    setUsuarioSelecionado(null);
-    setNovoUsuario({ nome: '', email: '' });
-    toast.success('Usuário atualizado com sucesso!');
+    const result = await updateResponsavel(usuarioSelecionado.id, {
+      nome: novoUsuario.nome,
+      email: novoUsuario.email || undefined
+    });
+
+    if (result) {
+      setModalEdit(false);
+      setUsuarioSelecionado(null);
+      setNovoUsuario({ nome: '', email: '' });
+      toast.success('Usuário atualizado com sucesso!');
+    } else {
+      toast.error('Erro ao atualizar usuário');
+    }
   };
 
-  const handleDeleteUsuario = (id: string) => {
-    setUsuarios(usuarios.filter(u => u.id !== id));
-    toast.success('Usuário removido com sucesso!');
+  const handleDeleteUsuario = async (id: string) => {
+    const success = await deleteResponsavel(id);
+    if (success) {
+      toast.success('Usuário removido com sucesso!');
+    } else {
+      toast.error('Erro ao remover usuário');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -153,7 +163,7 @@ const Usuarios = () => {
             <Users className="h-5 w-5 text-blue-500" />
             Lista de Usuários
             <Badge variant="secondary" className="ml-2">
-              {usuariosFiltrados.length} de {usuarios.length}
+              {usuariosFiltrados.length} de {responsaveis.length}
             </Badge>
           </CardTitle>
         </CardHeader>

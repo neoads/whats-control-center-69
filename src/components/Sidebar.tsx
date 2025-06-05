@@ -2,9 +2,9 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BarChart3, Phone, FolderOpen, Users, Shield, Activity, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,13 +23,18 @@ const navigation = [
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    toast.success('Logout realizado com sucesso!', {
-      className: 'warion-toast'
-    });
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Logout realizado com sucesso!', {
+        className: 'warion-toast'
+      });
+      navigate('/login');
+    } catch (error) {
+      toast.error('Erro ao fazer logout');
+    }
   };
 
   return (
@@ -85,18 +90,25 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <div className="flex items-center gap-3 mb-4">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-green-500 text-black font-bold text-sm">
-              W
+              {user?.email?.charAt(0).toUpperCase() || 'W'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white">
-              WARION ADMIN
+            <p className="text-sm font-medium text-white truncate">
+              {user?.email || 'WARION ADMIN'}
             </p>
             <p className="text-xs text-gray-400">
-              admin@warion.com
+              Usuário logado
             </p>
           </div>
         </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </button>
       </div>
     </div>
   );

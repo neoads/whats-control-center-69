@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
@@ -10,43 +11,14 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
-    console.log('Verificando autenticação...');
-    const checkAuth = () => {
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      console.log('Status de login no localStorage:', isLoggedIn);
-      
-      if (isLoggedIn === 'true') {
-        console.log('Usuário autenticado');
-        setIsAuthenticated(true);
-      } else {
-        console.log('Usuário não autenticado, redirecionando para login');
-        navigate('/login', { replace: true });
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, [navigate, location.pathname]);
-
-  // Adicionar listener para mudanças no localStorage
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      if (isLoggedIn !== 'true') {
-        setIsAuthenticated(false);
-        navigate('/login', { replace: true });
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [navigate]);
+  React.useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleMenuClick = () => {
     setSidebarOpen(!sidebarOpen);
@@ -56,7 +28,7 @@ const Layout = ({ children }: LayoutProps) => {
     setSidebarOpen(false);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-foreground">Carregando...</div>
@@ -64,7 +36,7 @@ const Layout = ({ children }: LayoutProps) => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null; // O useEffect já está redirecionando
   }
 
