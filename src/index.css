@@ -55,6 +55,7 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.02) 0%, #0D0D0D 70%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -62,25 +63,78 @@
   }
 }
 
-/* WARION Custom Utilities */
+/* WARION Cinematic Effects */
 @layer utilities {
   .hover-scale {
     @apply transition-all duration-200 hover:scale-105;
   }
 
   .warion-glow {
-    @apply shadow-lg shadow-warion-green/20;
+    @apply shadow-warion-glow;
   }
 
   .warion-button {
-    @apply bg-warion-green hover:bg-warion-green/90 text-warion-black font-medium tracking-widest uppercase transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-warion-green/30;
+    @apply bg-warion-green hover:bg-warion-green/90 text-warion-black font-medium tracking-widest uppercase transition-all duration-200 hover:scale-105 hover:shadow-neon-green;
+  }
+
+  .warion-button-secondary {
+    @apply bg-warion-blue hover:bg-warion-blue/90 text-warion-white font-medium tracking-widest uppercase transition-all duration-200 hover:scale-105 hover:shadow-neon-blue animate-cyber-glow;
+  }
+
+  .warion-button-danger {
+    @apply bg-warion-red hover:bg-warion-red/90 text-warion-white font-medium tracking-widest uppercase transition-all duration-200 hover:animate-shake-micro hover:shadow-neon-red;
   }
 
   .warion-card {
-    @apply bg-warion-gray border border-warion-gray/50 hover:border-warion-green/30 transition-all duration-300 hover:shadow-lg hover:shadow-warion-green/10;
+    @apply bg-warion-gray border border-warion-gray/50 hover:border-warion-green/30 transition-all duration-300 hover:shadow-lg hover:shadow-warion-green/10 hover:border-b-2 hover:border-b-warion-green;
   }
 
   .warion-text-gradient {
     @apply bg-gradient-to-r from-warion-green to-warion-blue bg-clip-text text-transparent;
   }
+
+  .warion-input-focus {
+    @apply focus:border-warion-green focus:ring-warion-green/20 focus:shadow-neon-green transition-all duration-300;
+  }
+
+  .warion-toast {
+    @apply bg-warion-gray border-l-4 border-l-warion-green shadow-neon-green/20;
+  }
+
+  .warion-logo-float {
+    @apply animate-float shadow-cyber-glow;
+  }
+
+  .warion-menu-item-active {
+    @apply bg-warion-green text-warion-black shadow-neon-green border-b-2 border-b-warion-green;
+  }
+
+  .warion-menu-item-hover {
+    @apply hover:bg-warion-gray hover:text-warion-green hover:shadow-md hover:shadow-warion-green/10 transition-all duration-200;
+  }
+
+  .warion-cascade {
+    animation-delay: var(--cascade-delay, 0ms);
+  }
+}
+
+/* Custom Neon Effects */
+.neon-border {
+  position: relative;
+}
+
+.neon-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: linear-gradient(45deg, #10B981, #0EA5E9);
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+}
+
+.floating-logo {
+  filter: drop-shadow(0 0 20px rgba(14, 165, 233, 0.6));
 }
