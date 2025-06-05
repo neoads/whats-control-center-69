@@ -20,49 +20,64 @@ export default {
 		},
 		extend: {
 			colors: {
-				border: 'hsl(0 0% 22%)',
-				input: 'hsl(0 0% 22%)',
-				ring: 'hsl(142 76% 36%)',
-				background: 'hsl(0 0% 8%)',
-				foreground: 'hsl(0 0% 95%)',
+				// WARION Brand Colors
+				warion: {
+					black: '#0D0D0D',
+					gray: '#1C1C1E',
+					blue: '#0EA5E9',
+					green: '#10B981',
+					red: '#EF4444',
+					white: '#F3F4F6',
+				},
+				// Updated system colors to match WARION palette
+				border: 'hsl(0 0% 11%)',
+				input: 'hsl(0 0% 11%)',
+				ring: '#10B981',
+				background: '#0D0D0D',
+				foreground: '#F3F4F6',
 				primary: {
-					DEFAULT: 'hsl(142 76% 36%)',
-					foreground: 'hsl(0 0% 98%)'
+					DEFAULT: '#10B981',
+					foreground: '#F3F4F6'
 				},
 				secondary: {
-					DEFAULT: 'hsl(0 0% 18%)',
-					foreground: 'hsl(0 0% 85%)'
+					DEFAULT: '#1C1C1E',
+					foreground: '#F3F4F6'
 				},
 				destructive: {
-					DEFAULT: 'hsl(0 62.8% 50%)',
-					foreground: 'hsl(0 0% 98%)'
+					DEFAULT: '#EF4444',
+					foreground: '#F3F4F6'
 				},
 				muted: {
-					DEFAULT: 'hsl(0 0% 18%)',
+					DEFAULT: '#1C1C1E',
 					foreground: 'hsl(0 0% 65%)'
 				},
 				accent: {
-					DEFAULT: 'hsl(0 0% 18%)',
-					foreground: 'hsl(0 0% 85%)'
+					DEFAULT: '#0EA5E9',
+					foreground: '#F3F4F6'
 				},
 				popover: {
-					DEFAULT: 'hsl(0 0% 12%)',
-					foreground: 'hsl(0 0% 95%)'
+					DEFAULT: '#1C1C1E',
+					foreground: '#F3F4F6'
 				},
 				card: {
-					DEFAULT: 'hsl(0 0% 12%)',
-					foreground: 'hsl(0 0% 95%)'
+					DEFAULT: '#1C1C1E',
+					foreground: '#F3F4F6'
 				},
 				sidebar: {
-					DEFAULT: 'hsl(0 0% 10%)',
-					foreground: 'hsl(0 0% 85%)',
-					primary: 'hsl(142 76% 36%)',
-					'primary-foreground': 'hsl(0 0% 98%)',
-					accent: 'hsl(0 0% 18%)',
-					'accent-foreground': 'hsl(0 0% 85%)',
-					border: 'hsl(0 0% 22%)',
-					ring: 'hsl(142 76% 36%)'
+					DEFAULT: '#0D0D0D',
+					foreground: '#F3F4F6',
+					primary: '#10B981',
+					'primary-foreground': '#0D0D0D',
+					accent: '#1C1C1E',
+					'accent-foreground': '#F3F4F6',
+					border: 'hsl(0 0% 11%)',
+					ring: '#10B981'
 				}
+			},
+			fontFamily: {
+				display: ['Sora', 'sans-serif'],
+				body: ['Inter', 'sans-serif'],
+				sans: ['Inter', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -95,12 +110,24 @@ export default {
 						opacity: "1",
 						transform: "translateY(0)"
 					}
+				},
+				'pulse-glow': {
+					"0%, 100%": {
+						boxShadow: "0 0 5px #10B981"
+					},
+					"50%": {
+						boxShadow: "0 0 20px #10B981"
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.3s ease-out'
+				'fade-in': 'fade-in 0.3s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
+			},
+			letterSpacing: {
+				'widest': '0.25em'
 			}
 		}
 	},

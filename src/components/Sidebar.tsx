@@ -46,12 +46,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
+          {/* WARION Logo */}
           <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
-            <div className="flex items-center justify-center w-10 h-10 bg-sidebar-primary rounded-lg">
-              <span className="text-lg font-bold text-sidebar-primary-foreground">W</span>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl overflow-hidden">
+              <img 
+                src="/lovable-uploads/4bd592f6-8c3f-4f70-8b94-7e7c1f77b43c.png" 
+                alt="WARION Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="text-lg font-semibold text-sidebar-foreground">Whats Manager</span>
+            <span className="text-xl font-display font-bold text-sidebar-foreground tracking-wider">WARION</span>
           </div>
 
           {/* Navigation */}
@@ -67,17 +71,17 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                         onClose();
                       }}
                       className={`
-                        w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 hover-scale
                         ${isActive 
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                          ? 'bg-warion-green text-warion-black shadow-lg shadow-warion-green/20' 
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-md hover:shadow-warion-green/10'
                         }
                       `}
                     >
                       <item.icon className="h-5 w-5" />
                       <div className="text-left">
-                        <div>{item.name}</div>
-                        <div className="text-xs text-muted-foreground">{item.description}</div>
+                        <div className="font-medium">{item.name}</div>
+                        <div className="text-xs opacity-70">{item.description}</div>
                       </div>
                     </button>
                   </li>
@@ -89,14 +93,14 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {/* User info */}
           <div className="border-t border-sidebar-border p-4">
             <div className="flex items-center gap-3 mb-4">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
-                  A
+              <Avatar className="h-10 w-10 ring-2 ring-warion-green/30">
+                <AvatarFallback className="bg-warion-gray text-warion-green font-display font-bold">
+                  W
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  Admin User
+                <p className="text-sm font-display font-semibold text-sidebar-foreground truncate">
+                  WARION Admin
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   admin@warion.com
@@ -107,10 +111,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent"
+              className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-warion-red/20 hover:text-warion-red transition-all duration-200"
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              <span className="font-medium">LOGOUT</span>
             </Button>
           </div>
         </div>

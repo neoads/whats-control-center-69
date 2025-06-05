@@ -19,11 +19,21 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         <Button
           variant="ghost"
           size="sm"
-          className="lg:hidden"
+          className="lg:hidden hover:bg-warion-green/20 hover:text-warion-green transition-all duration-200"
           onClick={onMenuClick}
         >
           <Menu className="h-5 w-5" />
         </Button>
+
+        {/* WARION Brand (mobile) */}
+        <div className="lg:hidden flex items-center gap-2">
+          <img 
+            src="/lovable-uploads/4bd592f6-8c3f-4f70-8b94-7e7c1f77b43c.png" 
+            alt="WARION" 
+            className="w-8 h-8"
+          />
+          <span className="font-display font-bold text-lg tracking-wider warion-text-gradient">WARION</span>
+        </div>
 
         {/* Search */}
         <div className="flex-1 max-w-lg">
@@ -33,18 +43,21 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               placeholder="Buscar números, projetos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-input border-border"
+              className="pl-10 bg-input border-border focus:border-warion-green focus:ring-warion-green/20 transition-all duration-200"
             />
           </div>
         </div>
 
         {/* Notifications */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="relative">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="relative hover:bg-warion-green/20 hover:text-warion-green transition-all duration-200"
+          >
             <Bell className="h-5 w-5" />
             <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-warion-red text-white animate-pulse-glow"
             >
               3
             </Badge>
