@@ -10,72 +10,65 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
-
-interface Projeto {
-  id: string;
-  nome: string;
-  descricao: string;
-}
-
-const mockProjetos: Projeto[] = [
-  { id: '1', nome: 'Projeto Alpha', descricao: 'Campanha de marketing digital para novos clientes' },
-  { id: '2', nome: 'Projeto Beta', descricao: 'Suporte técnico e atendimento ao cliente via WhatsApp' },
-  { id: '3', nome: 'Projeto Gamma', descricao: 'Vendas diretas e follow-up de leads qualificados' },
-];
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const Projetos = () => {
-  const [projetos, setProjetos] = useState<Projeto[]>(mockProjetos);
+  const { projetos, loading, addProjeto, updateProjeto, deleteProjeto } = useSupabaseData();
   const [busca, setBusca] = useState('');
   const [modalAdd, setModalAdd] = useState(false);
   const [modalEdit, setModalEdit] = useState(false);
-  const [projetoSelecionado, setProjetoSelecionado] = useState<Projeto | null>(null);
+  const [projetoSelecionado, setProjetoSelecionado] = useState<any>(null);
   const [novoProjeto, setNovoProjeto] = useState({ nome: '', descricao: '' });
 
   const projetosFiltrados = projetos.filter(projeto =>
     projeto.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    projeto.descricao.toLowerCase().includes(busca.toLowerCase())
+    (projeto.descricao && projeto.descricao.toLowerCase().includes(busca.toLowerCase()))
   );
 
-  const handleAddProjeto = () => {
+  const handleAddProjeto = async () => {
     if (novoProjeto.nome.length < 2) {
-      toast.error('Nome do projeto deve ter pelo menos 2 caracteres');
       return;
     }
     
-    const projeto: Projeto = {
-      id: Date.now().toString(),
-      ...novoProjeto
-    };
-    setProjetos([...projetos, projeto]);
+    await addProjeto({
+      nome: novoProjeto.nome,
+      descricao: novoProjeto.descricao
+    });
+    
     setModalAdd(false);
     setNovoProjeto({ nome: '', descricao: '' });
-    toast.success('Projeto adicionado com sucesso!');
   };
 
-  const handleEditProjeto = () => {
+  const handleEditProjeto = async () => {
     if (!projetoSelecionado) return;
     
     if (novoProjeto.nome.length < 2) {
-      toast.error('Nome do projeto deve ter pelo menos 2 caracteres');
       return;
     }
 
-    setProjetos(projetos.map(p => 
-      p.id === projetoSelecionado.id 
-        ? { ...p, nome: novoProjeto.nome, descricao: novoProjeto.descricao }
-        : p
-    ));
+    await updateProjeto(projetoSelecionado.id, {
+      nome: novoProjeto.nome,
+      descricao: novoProjeto.descricao
+    });
+    
     setModalEdit(false);
     setProjetoSelecionado(null);
     setNovoProjeto({ nome: '', descricao: '' });
-    toast.success('Projeto atualizado com sucesso!');
   };
 
-  const handleDeleteProjeto = (id: string) => {
-    setProjetos(projetos.filter(p => p.id !== id));
-    toast.success('Projeto removido com sucesso!');
+  const handleDeleteProjeto = async (id: string) => {
+    await deleteProjeto(id);
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -157,72 +150,89 @@ const Projetos = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome do Projeto</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projetosFiltrados.map((projeto) => (
-                <TableRow key={projeto.id}>
-                  <TableCell className="flex items-center gap-2">
-                    <FolderOpen className="h-4 w-4 text-purple-500" />
-                    <span className="font-medium">{projeto.nome}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {projeto.descricao.length > 60 
-                        ? `${projeto.descricao.substring(0, 60)}...` 
-                        : projeto.descricao
-                      }
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setProjetoSelecionado(projeto);
-                          setNovoProjeto({ nome: projeto.nome, descricao: projeto.descricao });
-                          setModalEdit(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir o projeto "{projeto.nome}"? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeleteProjeto(projeto.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
+          {projetosFiltrados.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome do Projeto</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {projetosFiltrados.map((projeto) => (
+                  <TableRow key={projeto.id}>
+                    <TableCell className="flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4 text-purple-500" />
+                      <span className="font-medium">{projeto.nome}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {projeto.descricao && projeto.descricao.length > 60 
+                          ? `${projeto.descricao.substring(0, 60)}...` 
+                          : projeto.descricao || 'Sem descrição'
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setProjetoSelecionado(projeto);
+                            setNovoProjeto({ 
+                              nome: projeto.nome, 
+                              descricao: projeto.descricao || '' 
+                            });
+                            setModalEdit(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o projeto "{projeto.nome}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteProjeto(projeto.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Nenhum projeto encontrado</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setModalAdd(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar seu primeiro projeto
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

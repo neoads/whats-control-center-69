@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const Usuarios = () => {
@@ -27,54 +26,37 @@ const Usuarios = () => {
 
   const handleAddUsuario = async () => {
     if (novoUsuario.nome.length < 2) {
-      toast.error('Nome do responsável deve ter pelo menos 2 caracteres');
       return;
     }
     
-    const result = await addResponsavel({
+    await addResponsavel({
       nome: novoUsuario.nome,
       email: novoUsuario.email || undefined
     });
-
-    if (result) {
-      setModalAdd(false);
-      setNovoUsuario({ nome: '', email: '' });
-      toast.success('Usuário adicionado com sucesso!');
-    } else {
-      toast.error('Erro ao adicionar usuário');
-    }
+    
+    setModalAdd(false);
+    setNovoUsuario({ nome: '', email: '' });
   };
 
   const handleEditUsuario = async () => {
     if (!usuarioSelecionado) return;
     
     if (novoUsuario.nome.length < 2) {
-      toast.error('Nome do responsável deve ter pelo menos 2 caracteres');
       return;
     }
 
-    const result = await updateResponsavel(usuarioSelecionado.id, {
+    await updateResponsavel(usuarioSelecionado.id, {
       nome: novoUsuario.nome,
       email: novoUsuario.email || undefined
     });
-
-    if (result) {
-      setModalEdit(false);
-      setUsuarioSelecionado(null);
-      setNovoUsuario({ nome: '', email: '' });
-      toast.success('Usuário atualizado com sucesso!');
-    } else {
-      toast.error('Erro ao atualizar usuário');
-    }
+    
+    setModalEdit(false);
+    setUsuarioSelecionado(null);
+    setNovoUsuario({ nome: '', email: '' });
   };
 
   const handleDeleteUsuario = async (id: string) => {
-    const success = await deleteResponsavel(id);
-    if (success) {
-      toast.success('Usuário removido com sucesso!');
-    } else {
-      toast.error('Erro ao remover usuário');
-    }
+    await deleteResponsavel(id);
   };
 
   if (loading) {
@@ -168,69 +150,86 @@ const Usuarios = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usuariosFiltrados.map((usuario) => (
-                <TableRow key={usuario.id}>
-                  <TableCell className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">{usuario.nome}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {usuario.email || 'Não informado'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setUsuarioSelecionado(usuario);
-                          setNovoUsuario({ nome: usuario.nome, email: usuario.email || '' });
-                          setModalEdit(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir o usuário "{usuario.nome}"? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeleteUsuario(usuario.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
+          {usuariosFiltrados.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {usuariosFiltrados.map((usuario) => (
+                  <TableRow key={usuario.id}>
+                    <TableCell className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">{usuario.nome}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {usuario.email || 'Não informado'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setUsuarioSelecionado(usuario);
+                            setNovoUsuario({ 
+                              nome: usuario.nome, 
+                              email: usuario.email || '' 
+                            });
+                            setModalEdit(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o usuário "{usuario.nome}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteUsuario(usuario.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Nenhum responsável encontrado</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setModalAdd(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar seu primeiro responsável
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

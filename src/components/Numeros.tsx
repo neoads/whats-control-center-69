@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Phone, Plus, Search, Filter, Eye, Edit, Trash2, CheckCircle, PhoneOff, AlertTriangle, Zap, Clock, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,57 +12,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-
-interface Numero {
-  id: string;
-  numero: string;
-  status: 'Ativo' | 'Inativo' | 'Suspenso' | 'API' | 'Aquecendo';
-  projeto: string;
-  responsavel: string;
-  dispositivo: 'Celular' | 'Emulador';
-  mensagens: number;
-  ultimaAtividade: string;
-}
-
-const mockNumeros: Numero[] = [
-  { id: '1', numero: '+55 31 8297-7059', status: 'Ativo', projeto: 'TESTE', responsavel: 'SLS', dispositivo: 'Emulador', mensagens: 0, ultimaAtividade: 'Agora' },
-  { id: '2', numero: '+55 11 9234-5678', status: 'Aquecendo', projeto: 'Projeto Alpha', responsavel: 'João Silva', dispositivo: 'Celular', mensagens: 15, ultimaAtividade: '2h atrás' },
-  { id: '3', numero: '+55 21 8765-4321', status: 'API', projeto: 'Projeto Beta', responsavel: 'Maria Santos', dispositivo: 'Emulador', mensagens: 42, ultimaAtividade: '1h atrás' },
-];
-
-const projetos = ['Todos', 'TESTE', 'Projeto Alpha', 'Projeto Beta'];
+import { useSupabaseData, NumeroData } from '@/hooks/useSupabaseData';
 
 const statusConfig = {
-  'Ativo': { icon: CheckCircle, color: 'bg-green-500', textColor: 'text-green-500' },
-  'Inativo': { icon: PhoneOff, color: 'bg-gray-500', textColor: 'text-gray-500' },
-  'Suspenso': { icon: AlertTriangle, color: 'bg-red-500', textColor: 'text-red-500' },
-  'API': { icon: Zap, color: 'bg-blue-500', textColor: 'text-blue-500' },
-  'Aquecendo': { icon: Clock, color: 'bg-yellow-500', textColor: 'text-yellow-500' }
+  'ativo': { icon: CheckCircle, color: 'bg-green-500', textColor: 'text-green-500' },
+  'inativo': { icon: PhoneOff, color: 'bg-gray-500', textColor: 'text-gray-500' },
+  'suspenso': { icon: AlertTriangle, color: 'bg-red-500', textColor: 'text-red-500' },
+  'api': { icon: Zap, color: 'bg-blue-500', textColor: 'text-blue-500' },
+  'aquecendo': { icon: Clock, color: 'bg-yellow-500', textColor: 'text-yellow-500' }
 };
 
 const Numeros = () => {
-  const [numeros, setNumeros] = useState<Numero[]>(mockNumeros);
+  const { 
+    numeros, 
+    projetos, 
+    responsaveis,
+    loading, 
+    addNumero, 
+    updateNumero, 
+    deleteNumero 
+  } = useSupabaseData();
+  
   const [filtroStatus, setFiltroStatus] = useState<string>('Todos');
   const [filtroProjeto, setFiltroProjeto] = useState<string>('Todos');
   const [busca, setBusca] = useState('');
   const [modalAdd, setModalAdd] = useState(false);
   const [modalEdit, setModalEdit] = useState(false);
   const [modalDetails, setModalDetails] = useState(false);
-  const [numeroSelecionado, setNumeroSelecionado] = useState<Numero | null>(null);
+  const [numeroSelecionado, setNumeroSelecionado] = useState<NumeroData | null>(null);
   const [novoNumero, setNovoNumero] = useState({
     numero: '',
-    projeto: '',
-    responsavel: '',
-    dispositivo: 'Celular' as 'Celular' | 'Emulador',
-    status: 'Aquecendo' as Numero['status']
+    projeto_id: '',
+    responsavel_id: '',
+    dispositivo: '' as ('Celular' | 'Emulador' | ''),
+    status: 'aquecendo' as ('ativo' | 'inativo' | 'suspenso' | 'api' | 'aquecendo')
   });
 
+  const statusList = ['Todos', 'ativo', 'inativo', 'suspenso', 'api', 'aquecendo'];
+
   const numerosFiltrados = numeros.filter(numero => {
-    const matchStatus = filtroStatus === 'Todos' || numero.status === filtroStatus;
-    const matchProjeto = filtroProjeto === 'Todos' || numero.projeto === filtroProjeto;
+    const matchStatus = filtroStatus === 'Todos' || numero.status === filtroStatus.toLowerCase();
+    const matchProjeto = filtroProjeto === 'Todos' || numero.projeto_id === filtroProjeto;
     const matchBusca = numero.numero.toLowerCase().includes(busca.toLowerCase()) ||
-                      numero.projeto.toLowerCase().includes(busca.toLowerCase()) ||
-                      numero.responsavel.toLowerCase().includes(busca.toLowerCase());
+                      (numero.dispositivo && numero.dispositivo.toLowerCase().includes(busca.toLowerCase()));
     return matchStatus && matchProjeto && matchBusca;
   });
 
@@ -74,50 +67,75 @@ const Numeros = () => {
     }
   };
 
-  const handleAddNumero = () => {
-    const numero: Numero = {
-      id: Date.now().toString(),
-      ...novoNumero,
-      mensagens: 0,
-      ultimaAtividade: 'Agora'
-    };
-    setNumeros([...numeros, numero]);
+  const handleAddNumero = async () => {
+    if (novoNumero.numero.length < 8) {
+      toast.error('O número deve ter pelo menos 8 caracteres');
+      return;
+    }
+    
+    await addNumero({
+      numero: novoNumero.numero,
+      projeto_id: novoNumero.projeto_id || undefined,
+      responsavel_id: novoNumero.responsavel_id || undefined,
+      dispositivo: novoNumero.dispositivo || undefined,
+      status: novoNumero.status
+    });
+    
     setModalAdd(false);
-    setNovoNumero({ numero: '', projeto: '', responsavel: '', dispositivo: 'Celular', status: 'Aquecendo' });
-    toast.success('Número adicionado com sucesso!');
+    setNovoNumero({
+      numero: '',
+      projeto_id: '',
+      responsavel_id: '',
+      dispositivo: '',
+      status: 'aquecendo'
+    });
   };
 
-  const handleEditNumero = () => {
+  const handleEditNumero = async () => {
     if (!numeroSelecionado) return;
     
-    const numerosAtualizados = numeros.map(n => 
-      n.id === numeroSelecionado.id 
-        ? { ...numeroSelecionado, ...novoNumero }
-        : n
-    );
+    if (novoNumero.numero.length < 8) {
+      toast.error('O número deve ter pelo menos 8 caracteres');
+      return;
+    }
+
+    await updateNumero(numeroSelecionado.id, {
+      numero: novoNumero.numero,
+      projeto_id: novoNumero.projeto_id || null,
+      responsavel_id: novoNumero.responsavel_id || null,
+      dispositivo: novoNumero.dispositivo || null,
+      status: novoNumero.status
+    });
     
-    setNumeros(numerosAtualizados);
     setModalEdit(false);
     setNumeroSelecionado(null);
-    toast.success('Número atualizado com sucesso!');
   };
 
-  const handleDeleteNumero = (id: string) => {
-    setNumeros(numeros.filter(n => n.id !== id));
-    toast.success('Número removido com sucesso!');
+  const handleDeleteNumero = async (id: string) => {
+    await deleteNumero(id);
   };
 
-  const openEditModal = (numero: Numero) => {
+  const openEditModal = (numero: NumeroData) => {
     setNumeroSelecionado(numero);
     setNovoNumero({
       numero: numero.numero,
-      projeto: numero.projeto,
-      responsavel: numero.responsavel,
-      dispositivo: numero.dispositivo,
+      projeto_id: numero.projeto_id || '',
+      responsavel_id: numero.responsavel_id || '',
+      dispositivo: (numero.dispositivo || '') as ('Celular' | 'Emulador' | ''),
       status: numero.status
     });
     setModalEdit(true);
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -149,55 +167,70 @@ const Numeros = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="projeto">Projeto *</Label>
-                  <Select onValueChange={(value) => setNovoNumero({...novoNumero, projeto: value})}>
+                  <Label htmlFor="projeto">Projeto</Label>
+                  <Select 
+                    value={novoNumero.projeto_id} 
+                    onValueChange={(value) => setNovoNumero({...novoNumero, projeto_id: value})}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um projeto" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="TESTE">TESTE</SelectItem>
-                      <SelectItem value="Projeto Alpha">Projeto Alpha</SelectItem>
-                      <SelectItem value="Projeto Beta">Projeto Beta</SelectItem>
+                      <SelectItem value="">Sem projeto</SelectItem>
+                      {projetos.map(projeto => (
+                        <SelectItem key={projeto.id} value={projeto.id}>{projeto.nome}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="responsavel">Responsável *</Label>
-                  <Select onValueChange={(value) => setNovoNumero({...novoNumero, responsavel: value})}>
+                  <Label htmlFor="responsavel">Responsável</Label>
+                  <Select 
+                    value={novoNumero.responsavel_id} 
+                    onValueChange={(value) => setNovoNumero({...novoNumero, responsavel_id: value})}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um responsável" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="SLS">SLS</SelectItem>
-                      <SelectItem value="João Silva">João Silva</SelectItem>
-                      <SelectItem value="Maria Santos">Maria Santos</SelectItem>
+                      <SelectItem value="">Sem responsável</SelectItem>
+                      {responsaveis.map(resp => (
+                        <SelectItem key={resp.id} value={resp.id}>{resp.nome}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="dispositivo">Dispositivo *</Label>
-                  <Select onValueChange={(value) => setNovoNumero({...novoNumero, dispositivo: value as 'Celular' | 'Emulador'})}>
+                  <Label htmlFor="dispositivo">Dispositivo</Label>
+                  <Select 
+                    value={novoNumero.dispositivo} 
+                    onValueChange={(value) => setNovoNumero({...novoNumero, dispositivo: value as 'Celular' | 'Emulador' | ''})}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o dispositivo" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">Não definido</SelectItem>
                       <SelectItem value="Emulador">Emulador</SelectItem>
                       <SelectItem value="Celular">Celular</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select onValueChange={(value) => setNovoNumero({...novoNumero, status: value as Numero['status']})}>
+                  <Label htmlFor="status">Status *</Label>
+                  <Select 
+                    value={novoNumero.status} 
+                    onValueChange={(value) => setNovoNumero({...novoNumero, status: value as NumeroData['status']})}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Aquecendo">Aquecendo</SelectItem>
-                      <SelectItem value="API">API</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                      <SelectItem value="Suspenso">Suspenso</SelectItem>
+                      <SelectItem value="ativo">Ativo</SelectItem>
+                      <SelectItem value="aquecendo">Aquecendo</SelectItem>
+                      <SelectItem value="api">API</SelectItem>
+                      <SelectItem value="inativo">Inativo</SelectItem>
+                      <SelectItem value="suspenso">Suspenso</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -222,14 +255,14 @@ const Numeros = () => {
             <div className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex flex-wrap gap-2">
-                  {['Todos', 'Ativo', 'Inativo', 'Suspenso', 'API', 'Aquecendo'].map((status) => (
+                  {statusList.map((status) => (
                     <Button
                       key={status}
                       variant={filtroStatus === status ? "default" : "outline"}
                       size="sm"
                       onClick={() => setFiltroStatus(status)}
                     >
-                      {status}
+                      {status === 'Todos' ? 'Todos' : status.charAt(0).toUpperCase() + status.slice(1)}
                     </Button>
                   ))}
                 </div>
@@ -257,10 +290,9 @@ const Numeros = () => {
                       <SelectValue placeholder="Selecione um projeto" />
                     </SelectTrigger>
                     <SelectContent>
-                      {projetos.map((projeto) => (
-                        <SelectItem key={projeto} value={projeto}>
-                          {projeto}
-                        </SelectItem>
+                      <SelectItem value="Todos">Todos os projetos</SelectItem>
+                      {projetos.map(projeto => (
+                        <SelectItem key={projeto.id} value={projeto.id}>{projeto.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -283,107 +315,134 @@ const Numeros = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Projeto</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Dispositivo</TableHead>
-                  <TableHead>Mensagens</TableHead>
-                  <TableHead>Última Atividade</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {numerosFiltrados.map((numero) => {
-                  const StatusIcon = statusConfig[numero.status].icon;
-                  return (
-                    <TableRow key={numero.id}>
-                      <TableCell className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        <span>{numero.numero}</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCopyNumber(numero.numero)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Copiar número</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant="outline" 
-                          className={`${statusConfig[numero.status].textColor} border-current`}
-                        >
-                          <StatusIcon className="w-3 h-3 mr-1" />
-                          {numero.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{numero.projeto}</TableCell>
-                      <TableCell>{numero.responsavel}</TableCell>
-                      <TableCell>{numero.dispositivo}</TableCell>
-                      <TableCell>{numero.mensagens}</TableCell>
-                      <TableCell>{numero.ultimaAtividade}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setNumeroSelecionado(numero);
-                              setModalDetails(true);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => openEditModal(numero)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4 text-destructive" />
+            {numerosFiltrados.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Dispositivo</TableHead>
+                    <TableHead>Mensagens</TableHead>
+                    <TableHead>Última Atividade</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {numerosFiltrados.map((numero) => {
+                    const StatusIcon = statusConfig[numero.status]?.icon || PhoneOff;
+                    const projetoNome = projetos.find(p => p.id === numero.projeto_id)?.nome || 'Sem projeto';
+                    const responsavelNome = responsaveis.find(r => r.id === numero.responsavel_id)?.nome || 'Não atribuído';
+                    
+                    return (
+                      <TableRow key={numero.id}>
+                        <TableCell className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          <span>{numero.numero}</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCopyNumber(numero.numero)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Copy className="h-3 w-3" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o número {numero.numero}? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteNumero(numero.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Copiar número</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant="outline" 
+                            className={`${statusConfig[numero.status]?.textColor || 'text-gray-500'} border-current`}
+                          >
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {numero.status.charAt(0).toUpperCase() + numero.status.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{projetoNome}</TableCell>
+                        <TableCell>{responsavelNome}</TableCell>
+                        <TableCell>{numero.dispositivo || 'Não definido'}</TableCell>
+                        <TableCell>{numero.mensagens}</TableCell>
+                        <TableCell>
+                          {numero.ultima_atividade 
+                            ? new Date(numero.ultima_atividade).toLocaleString('pt-BR', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : 'Nunca utilizado'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setNumeroSelecionado(numero);
+                                setModalDetails(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => openEditModal(numero)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o número {numero.numero}? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteNumero(numero.id)}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum número encontrado</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setModalAdd(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar seu primeiro número
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -402,9 +461,9 @@ const Numeros = () => {
                   <h3 className="text-lg font-semibold">{numeroSelecionado.numero}</h3>
                   <Badge 
                     variant="outline"
-                    className={`${statusConfig[numeroSelecionado.status].textColor} border-current`}
+                    className={`${statusConfig[numeroSelecionado.status]?.textColor || 'text-gray-500'} border-current`}
                   >
-                    {numeroSelecionado.status}
+                    {numeroSelecionado.status.charAt(0).toUpperCase() + numeroSelecionado.status.slice(1)}
                   </Badge>
                 </div>
                 
@@ -417,7 +476,9 @@ const Numeros = () => {
                         </div>
                         Projeto
                       </Label>
-                      <p className="text-sm font-medium">{numeroSelecionado.projeto}</p>
+                      <p className="text-sm font-medium">
+                        {projetos.find(p => p.id === numeroSelecionado.projeto_id)?.nome || 'Sem projeto'}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
@@ -426,7 +487,9 @@ const Numeros = () => {
                         </div>
                         Responsável
                       </Label>
-                      <p className="text-sm font-medium">{numeroSelecionado.responsavel}</p>
+                      <p className="text-sm font-medium">
+                        {responsaveis.find(r => r.id === numeroSelecionado.responsavel_id)?.nome || 'Não atribuído'}
+                      </p>
                     </div>
                   </div>
                   
@@ -437,7 +500,9 @@ const Numeros = () => {
                       </div>
                       Dispositivo
                     </Label>
-                    <p className="text-sm font-medium">{numeroSelecionado.dispositivo}</p>
+                    <p className="text-sm font-medium">
+                      {numeroSelecionado.dispositivo || 'Não definido'}
+                    </p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -457,8 +522,36 @@ const Numeros = () => {
                         </div>
                         Última Atividade
                       </Label>
-                      <p className="text-sm font-medium">{numeroSelecionado.ultimaAtividade}</p>
+                      <p className="text-sm font-medium">
+                        {numeroSelecionado.ultima_atividade 
+                          ? new Date(numeroSelecionado.ultima_atividade).toLocaleString('pt-BR', {
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : 'Nunca utilizado'}
+                      </p>
                     </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
+                        🗓️
+                      </div>
+                      Criado em
+                    </Label>
+                    <p className="text-sm font-medium">
+                      {new Date(numeroSelecionado.criado_em).toLocaleString('pt-BR', {
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -488,55 +581,70 @@ const Numeros = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-projeto">Projeto *</Label>
-                <Select value={novoNumero.projeto} onValueChange={(value) => setNovoNumero({...novoNumero, projeto: value})}>
+                <Label htmlFor="edit-projeto">Projeto</Label>
+                <Select 
+                  value={novoNumero.projeto_id} 
+                  onValueChange={(value) => setNovoNumero({...novoNumero, projeto_id: value})}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um projeto" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="TESTE">TESTE</SelectItem>
-                    <SelectItem value="Projeto Alpha">Projeto Alpha</SelectItem>
-                    <SelectItem value="Projeto Beta">Projeto Beta</SelectItem>
+                    <SelectItem value="">Sem projeto</SelectItem>
+                    {projetos.map(projeto => (
+                      <SelectItem key={projeto.id} value={projeto.id}>{projeto.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-responsavel">Responsável *</Label>
-                <Select value={novoNumero.responsavel} onValueChange={(value) => setNovoNumero({...novoNumero, responsavel: value})}>
+                <Label htmlFor="edit-responsavel">Responsável</Label>
+                <Select 
+                  value={novoNumero.responsavel_id} 
+                  onValueChange={(value) => setNovoNumero({...novoNumero, responsavel_id: value})}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SLS">SLS</SelectItem>
-                    <SelectItem value="João Silva">João Silva</SelectItem>
-                    <SelectItem value="Maria Santos">Maria Santos</SelectItem>
+                    <SelectItem value="">Sem responsável</SelectItem>
+                    {responsaveis.map(resp => (
+                      <SelectItem key={resp.id} value={resp.id}>{resp.nome}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-dispositivo">Dispositivo *</Label>
-                <Select value={novoNumero.dispositivo} onValueChange={(value) => setNovoNumero({...novoNumero, dispositivo: value as 'Celular' | 'Emulador'})}>
+                <Label htmlFor="edit-dispositivo">Dispositivo</Label>
+                <Select 
+                  value={novoNumero.dispositivo} 
+                  onValueChange={(value) => setNovoNumero({...novoNumero, dispositivo: value as 'Celular' | 'Emulador' | ''})}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o dispositivo" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Não definido</SelectItem>
                     <SelectItem value="Emulador">Emulador</SelectItem>
                     <SelectItem value="Celular">Celular</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select value={novoNumero.status} onValueChange={(value) => setNovoNumero({...novoNumero, status: value as Numero['status']})}>
+                <Label htmlFor="edit-status">Status *</Label>
+                <Select 
+                  value={novoNumero.status} 
+                  onValueChange={(value) => setNovoNumero({...novoNumero, status: value as NumeroData['status']})}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Aquecendo">Aquecendo</SelectItem>
-                    <SelectItem value="API">API</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                    <SelectItem value="Suspenso">Suspenso</SelectItem>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="aquecendo">Aquecendo</SelectItem>
+                    <SelectItem value="api">API</SelectItem>
+                    <SelectItem value="inativo">Inativo</SelectItem>
+                    <SelectItem value="suspenso">Suspenso</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

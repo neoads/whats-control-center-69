@@ -37,7 +37,16 @@ const Dashboard = () => {
     number: numero.numero,
     project: projetos.find(p => p.id === numero.projeto_id)?.nome || 'Sem projeto',
     status: numero.status,
-    statusColor: statusData.find(s => s.status.toLowerCase() === numero.status)?.color || 'bg-gray-500'
+    statusColor: (() => {
+      switch (numero.status) {
+        case 'ativo': return 'bg-green-500';
+        case 'api': return 'bg-blue-500';
+        case 'aquecendo': return 'bg-yellow-500';
+        case 'inativo': return 'bg-gray-500';
+        case 'suspenso': return 'bg-red-500';
+        default: return 'bg-gray-500';
+      }
+    })()
   }));
 
   if (loading) {

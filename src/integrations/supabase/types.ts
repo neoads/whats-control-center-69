@@ -107,21 +107,21 @@ export type Database = {
           id: string
           nome_grupo: string
           url: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           nome_grupo: string
           url: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           nome_grupo?: string
           url?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -174,7 +174,7 @@ export type Database = {
           responsavel_id: string | null
           status: string | null
           ultima_atividade: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           criado_em?: string | null
@@ -186,7 +186,7 @@ export type Database = {
           responsavel_id?: string | null
           status?: string | null
           ultima_atividade?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           criado_em?: string | null
@@ -198,7 +198,7 @@ export type Database = {
           responsavel_id?: string | null
           status?: string | null
           ultima_atividade?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -372,7 +372,7 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           criado_em?: string | null
@@ -380,7 +380,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           criado_em?: string | null
@@ -388,7 +388,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -406,21 +406,21 @@ export type Database = {
           email: string | null
           id: string
           nome: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           email?: string | null
           id?: string
           nome: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
           email?: string | null
           id?: string
           nome?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
