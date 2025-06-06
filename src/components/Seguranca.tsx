@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Lock, Mail, MessageSquare, Settings, Plus, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,43 +7,84 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ConfigSalva {
   id: string;
   nome: string;
-  email: string;
-  pin: string;
-  mensagem: string;
-  dataAtualizacao: string;
+  email_recuperacao: string;
+  codigo_pin: string;
+  mensagem_recuperacao: string;
+  criado_em: string;
 }
 
 interface EmailDispositivo {
   id: string;
   email: string;
+  autorizado: boolean;
+  created_at: string;
 }
 
-const mockConfigsSalvas: ConfigSalva[] = [
-  { id: '1', nome: 'TESTE V1', email: 'emanuelytgamsdasaing@gmail.com', pin: '1234', mensagem: 'Frase de segurança V1', dataAtualizacao: '05/06/2025' },
-  { id: '2', nome: 'TESTE', email: 'emanuelytgaming@gmail.com', pin: '5678', mensagem: 'Frase de segurança TESTE', dataAtualizacao: '05/06/2025' },
-  { id: '3', nome: 'Configuração Padrão', email: 'emanuelytgaming@gmail.com', pin: '9012', mensagem: 'Configuração padrão', dataAtualizacao: '05/06/2025' },
-];
-
-const mockEmailsDispositivos: EmailDispositivo[] = [
-  { id: '1', email: 'emanuelytgaming@gmail.com' },
-];
-
 const Seguranca = () => {
-  const [emailRecuperacao, setEmailRecuperacao] = useState('admin@warion.com');
-  const [mensagemRecuperacao, setMensagemRecuperacao] = useState('Frase de segurança para verificação extra durante a recuperação');
-  const [codigoPIN, setCodigoPIN] = useState('1234');
-  const [configsSalvas, setConfigsSalvas] = useState<ConfigSalva[]>(mockConfigsSalvas);
-  const [emailsDispositivos, setEmailsDispositivos] = useState<EmailDispositivo[]>(mockEmailsDispositivos);
+  const { user } = useAuth();
+  const [emailRecuperacao, setEmailRecuperacao] = useState('');
+  const [mensagemRecuperacao, setMensagemRecuperacao] = useState('');
+  const [codigoPIN, setCodigoPIN] = useState('');
+  const [configsSalvas, setConfigsSalvas] = useState<ConfigSalva[]>([]);
+  const [emailsDispositivos, setEmailsDispositivos] = useState<EmailDispositivo[]>([]);
   const [modalSalvarConfig, setModalSalvarConfig] = useState(false);
   const [modalAddEmail, setModalAddEmail] = useState(false);
   const [nomeConfig, setNomeConfig] = useState('');
   const [novoEmailDispositivo, setNovoEmailDispositivo] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Carregar dados do Supabase
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Carregar configurações de segurança
+      const { data: configs, error: configsError } = await supabase
+        .from('configuracoes_seguranca')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('criado_em', { ascending: false });
+
+      if (configsError) {
+        console.error('Erro ao carregar configurações:', configsError);
+      } else {
+        setConfigsSalvas(configs || []);
+      }
+
+      // Carregar emails de dispositivos
+      const { data: emails, error: emailsError } = await supabase
+        .from('emails_dispositivos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (emailsError) {
+        console.error('Erro ao carregar emails:', emailsError);
+      } else {
+        setEmailsDispositivos(emails || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast.error('Erro ao carregar dados de segurança');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSalvarSeguranca = () => {
     if (codigoPIN.length < 4 || codigoPIN.length > 8) {
@@ -52,44 +92,78 @@ const Seguranca = () => {
       return;
     }
     
-    // Open modal to save configuration
     setModalSalvarConfig(true);
   };
 
-  const handleSalvarConfiguracao = () => {
+  const handleSalvarConfiguracao = async () => {
     if (!nomeConfig.trim()) {
       toast.error('Nome da configuração é obrigatório');
       return;
     }
 
-    const novaConfig: ConfigSalva = {
-      id: Date.now().toString(),
-      nome: nomeConfig,
-      email: emailRecuperacao,
-      pin: codigoPIN,
-      mensagem: mensagemRecuperacao,
-      dataAtualizacao: new Date().toLocaleDateString('pt-BR')
-    };
+    if (!user) return;
 
-    setConfigsSalvas([...configsSalvas, novaConfig]);
-    setModalSalvarConfig(false);
-    setNomeConfig('');
-    toast.success(`Configuração salva com sucesso como '${nomeConfig}'`);
+    try {
+      const { data, error } = await supabase
+        .from('configuracoes_seguranca')
+        .insert([{
+          nome: nomeConfig,
+          email_recuperacao: emailRecuperacao,
+          codigo_pin: codigoPIN,
+          mensagem_recuperacao: mensagemRecuperacao,
+          user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao salvar configuração:', error);
+        toast.error('Erro ao salvar configuração');
+        return;
+      }
+
+      toast.success(`Configuração '${nomeConfig}' salva com sucesso!`);
+      setModalSalvarConfig(false);
+      setNomeConfig('');
+      await loadData(); // Recarregar dados
+    } catch (error) {
+      console.error('Erro ao salvar configuração:', error);
+      toast.error('Erro ao salvar configuração');
+    }
   };
 
   const handleCarregarConfig = (config: ConfigSalva) => {
-    setEmailRecuperacao(config.email);
-    setMensagemRecuperacao(config.mensagem);
-    setCodigoPIN(config.pin);
+    setEmailRecuperacao(config.email_recuperacao || '');
+    setMensagemRecuperacao(config.mensagem_recuperacao || '');
+    setCodigoPIN(config.codigo_pin || '');
     toast.success(`Configuração "${config.nome}" carregada!`);
   };
 
-  const handleRemoverConfig = (id: string) => {
-    setConfigsSalvas(configsSalvas.filter(c => c.id !== id));
-    toast.success('Configuração removida!');
+  const handleRemoverConfig = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('configuracoes_seguranca')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Erro ao remover configuração:', error);
+        toast.error('Erro ao remover configuração');
+        return;
+      }
+
+      toast.success('Configuração removida!');
+      await loadData(); // Recarregar dados
+    } catch (error) {
+      console.error('Erro ao remover configuração:', error);
+      toast.error('Erro ao remover configuração');
+    }
   };
 
-  const handleAddEmailDispositivo = () => {
+  const handleAddEmailDispositivo = async () => {
     if (!novoEmailDispositivo) {
       toast.error('Email é obrigatório');
       return;
@@ -101,21 +175,68 @@ const Seguranca = () => {
       return;
     }
 
-    const novoEmail: EmailDispositivo = {
-      id: Date.now().toString(),
-      email: novoEmailDispositivo
-    };
+    if (!user) return;
 
-    setEmailsDispositivos([...emailsDispositivos, novoEmail]);
-    setModalAddEmail(false);
-    setNovoEmailDispositivo('');
-    toast.success('Email de dispositivo adicionado!');
+    try {
+      const { data, error } = await supabase
+        .from('emails_dispositivos')
+        .insert([{
+          email: novoEmailDispositivo,
+          user_id: user.id,
+          autorizado: true
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao adicionar email:', error);
+        toast.error('Erro ao adicionar email');
+        return;
+      }
+
+      toast.success('Email de dispositivo adicionado!');
+      setModalAddEmail(false);
+      setNovoEmailDispositivo('');
+      await loadData(); // Recarregar dados
+    } catch (error) {
+      console.error('Erro ao adicionar email:', error);
+      toast.error('Erro ao adicionar email');
+    }
   };
 
-  const handleRemoverEmailDispositivo = (id: string) => {
-    setEmailsDispositivos(emailsDispositivos.filter(e => e.id !== id));
-    toast.success('Email removido!');
+  const handleRemoverEmailDispositivo = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('emails_dispositivos')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Erro ao remover email:', error);
+        toast.error('Erro ao remover email');
+        return;
+      }
+
+      toast.success('Email removido!');
+      await loadData(); // Recarregar dados
+    } catch (error) {
+      console.error('Erro ao remover email:', error);
+      toast.error('Erro ao remover email');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -236,42 +357,50 @@ const Seguranca = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {configsSalvas.map((config) => (
-              <div key={config.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <Settings className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">{config.nome}</p>
-                      <Badge variant="secondary" className="text-xs">Configuração</Badge>
+            {configsSalvas.length > 0 ? (
+              configsSalvas.map((config) => (
+                <div key={config.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Settings className="h-4 w-4 text-blue-500" />
                     </div>
-                    <p className="text-sm text-muted-foreground">E-mail: {config.email}</p>
-                    <p className="text-xs text-muted-foreground">Atualizado: {config.dataAtualizacao}</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">{config.nome}</p>
+                        <Badge variant="secondary" className="text-xs">Configuração</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">E-mail: {config.email_recuperacao}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Atualizado: {new Date(config.criado_em).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleCarregarConfig(config)}
+                      className="text-blue-500 hover:text-blue-600"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Carregar
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleRemoverConfig(config.id)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleCarregarConfig(config)}
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Carregar
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleRemoverConfig(config.id)}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhuma configuração salva ainda</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
@@ -329,7 +458,9 @@ const Seguranca = () => {
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="font-medium">{emailDevice.email}</p>
-                      <Badge variant="secondary" className="mt-1">Autorizado</Badge>
+                      <Badge variant="secondary" className="mt-1">
+                        {emailDevice.autorizado ? 'Autorizado' : 'Pendente'}
+                      </Badge>
                     </div>
                   </div>
                   <Button 

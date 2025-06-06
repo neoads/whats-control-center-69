@@ -1,349 +1,395 @@
 
 import React, { useState } from 'react';
-import { Activity, Phone, Users, Plus, Trash2, Check, Link as LinkIcon } from 'lucide-react';
+import { Flame, Plus, Search, Edit, Trash2, Link, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-
-interface NumeroAquecimento {
-  id: string;
-  numero: string;
-  descricao?: string;
-  copiado?: boolean;
-}
-
-interface GrupoAquecimento {
-  id: string;
-  nome: string;
-  url: string;
-}
-
-const mockNumerosAquecimento: NumeroAquecimento[] = [
-  { id: '1', numero: '+551000000', descricao: '-' },
-];
-
-const mockGruposAquecimento: GrupoAquecimento[] = [];
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const Aquecimento = () => {
-  const [numerosAquecimento, setNumerosAquecimento] = useState<NumeroAquecimento[]>(mockNumerosAquecimento);
-  const [gruposAquecimento, setGruposAquecimento] = useState<GrupoAquecimento[]>(mockGruposAquecimento);
-  const [textAreaNumeros, setTextAreaNumeros] = useState('');
-  const [textAreaGrupos, setTextAreaGrupos] = useState('');
+  const { 
+    numeros, 
+    linksGrupos, 
+    loading, 
+    addNumero, 
+    deleteNumero,
+    addLinkGrupo,
+    deleteLinkGrupo 
+  } = useSupabaseData();
+  
+  const [busca, setBusca] = useState('');
+  const [modalAddNumero, setModalAddNumero] = useState(false);
+  const [modalAddGrupo, setModalAddGrupo] = useState(false);
+  const [novoNumero, setNovoNumero] = useState({ numero: '', descricao: '' });
+  const [novoGrupo, setNovoGrupo] = useState({ nome_grupo: '', url: '' });
 
-  const handleSalvarNumeros = () => {
-    if (!textAreaNumeros.trim()) {
-      toast.error('Digite pelo menos um número para salvar');
+  // Filtrar apenas números em aquecimento
+  const numerosAquecimento = numeros.filter(numero => numero.status === 'aquecendo');
+  
+  const numerosFiltrados = numerosAquecimento.filter(numero =>
+    numero.numero.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  const gruposFiltrados = linksGrupos.filter(grupo =>
+    grupo.nome_grupo.toLowerCase().includes(busca.toLowerCase()) ||
+    grupo.url.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  const handleAddNumero = async () => {
+    if (novoNumero.numero.length < 8) {
+      toast.error('O número deve ter pelo menos 8 caracteres');
       return;
     }
-
-    const linhas = textAreaNumeros.split('\n').filter(linha => linha.trim());
-    const novosNumeros: NumeroAquecimento[] = [];
-
-    linhas.forEach(linha => {
-      const partes = linha.split('|').map(p => p.trim());
-      const numero = partes[0];
-      const descricao = partes[1] || '-';
-
-      if (numero) {
-        novosNumeros.push({
-          id: Date.now().toString() + Math.random(),
-          numero,
-          descricao
-        });
-      }
+    
+    await addNumero({
+      numero: novoNumero.numero,
+      status: 'aquecendo'
     });
-
-    setNumerosAquecimento([...numerosAquecimento, ...novosNumeros]);
-    setTextAreaNumeros('');
-    toast.success(`${novosNumeros.length} número(s) adicionado(s) para aquecimento!`);
+    
+    setModalAddNumero(false);
+    setNovoNumero({ numero: '', descricao: '' });
   };
 
-  const handleSalvarGrupos = () => {
-    if (!textAreaGrupos.trim()) {
-      toast.error('Digite pelo menos um grupo para salvar');
+  const handleAddGrupo = async () => {
+    if (!novoGrupo.nome_grupo || !novoGrupo.url) {
+      toast.error('Nome do grupo e URL são obrigatórios');
       return;
     }
-
-    const linhas = textAreaGrupos.split('\n').filter(linha => linha.trim());
-    const novosGrupos: GrupoAquecimento[] = [];
-
-    linhas.forEach(linha => {
-      const partes = linha.split('|').map(p => p.trim());
-      const nome = partes[0];
-      const url = partes[1];
-
-      if (nome && url) {
-        novosGrupos.push({
-          id: Date.now().toString() + Math.random(),
-          nome,
-          url
-        });
-      }
+    
+    await addLinkGrupo({
+      nome_grupo: novoGrupo.nome_grupo,
+      url: novoGrupo.url
     });
-
-    setGruposAquecimento([...gruposAquecimento, ...novosGrupos]);
-    setTextAreaGrupos('');
-    toast.success(`${novosGrupos.length} grupo(s) adicionado(s) para aquecimento!`);
+    
+    setModalAddGrupo(false);
+    setNovoGrupo({ nome_grupo: '', url: '' });
   };
 
-  const handleCopiarNumero = async (numero: NumeroAquecimento) => {
+  const handleCopyNumber = async (numero: string) => {
     try {
-      await navigator.clipboard.writeText(numero.numero);
-      
-      // Atualizar o estado para mostrar que foi copiado
-      setNumerosAquecimento(nums => 
-        nums.map(n => n.id === numero.id ? { ...n, copiado: true } : n)
-      );
-      
-      toast.success('Número copiado para a área de transferência!');
-      
-      // Resetar o estado após 2 segundos
-      setTimeout(() => {
-        setNumerosAquecimento(nums => 
-          nums.map(n => n.id === numero.id ? { ...n, copiado: false } : n)
-        );
-      }, 2000);
+      await navigator.clipboard.writeText(numero);
+      toast.success('Número copiado com sucesso!');
     } catch (err) {
       toast.error('Erro ao copiar número');
     }
   };
 
-  const handleRemoverNumero = (id: string) => {
-    setNumerosAquecimento(numerosAquecimento.filter(n => n.id !== id));
-    toast.success('Número removido!');
+  const gerarLinkWhatsApp = (numero: string) => {
+    const numeroLimpo = numero.replace(/\D/g, '');
+    return `https://wa.me/${numeroLimpo}`;
   };
 
-  const handleRemoverGrupo = (id: string) => {
-    setGruposAquecimento(gruposAquecimento.filter(g => g.id !== id));
-    toast.success('Grupo removido!');
-  };
+  if (loading) {
+    return (
+      <div className="flex-1 space-y-6 p-8 pt-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Activity className="h-8 w-8 text-orange-500" />
-            Aquecimento de WhatsApp
+            <Flame className="h-8 w-8 text-orange-500" />
+            Aquecimento de Números
           </h2>
-          <p className="text-muted-foreground">Gerencie números e grupos para aquecimento</p>
+          <p className="text-muted-foreground">Gerencie números em processo de aquecimento e grupos salvos</p>
         </div>
       </div>
 
-      <Tabs defaultValue="numeros" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="numeros" className="flex items-center gap-2">
-            <Phone className="h-4 w-4" />
-            Números de Aquecimento
-          </TabsTrigger>
-          <TabsTrigger value="grupos" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Links de Grupos
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <CardTitle>Buscar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar números ou grupos..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="numeros" className="space-y-6">
-          {/* Adicionar Números */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Adicionar Números de Aquecimento</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Números (um por linha)</p>
-                <Textarea
-                  placeholder="+5511912345678 | Número de teste da campanha X
-+5562998765432 | Aquece de novo lote VIP"
-                  value={textAreaNumeros}
-                  onChange={(e) => setTextAreaNumeros(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Formato: +5511999999999 | Descrição (opcional)
-                </p>
-              </div>
-              <Button 
-                onClick={handleSalvarNumeros}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Salvar Números de Aquecimento
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Lista de Números */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Números Cadastrados ({numerosAquecimento.length})
-                <span className="text-sm font-normal text-muted-foreground">
-                  {numerosAquecimento.length} números
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {numerosAquecimento.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Copiar</TableHead>
-                      <TableHead>Número</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {numerosAquecimento.map((numero) => (
-                      <TableRow key={numero.id}>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopiarNumero(numero)}
-                            className={numero.copiado ? 'text-green-500' : 'text-primary'}
-                          >
-                            {numero.copiado ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Phone className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-primary" />
-                            <a 
-                              href={`https://wa.me/${numero.numero.replace(/[^\d]/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline font-mono"
-                            >
-                              {numero.numero}
-                            </a>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {numero.descricao}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoverNumero(numero.id)}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum número de aquecimento cadastrado ainda
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="grupos" className="space-y-6">
-          {/* Adicionar Grupos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Adicionar Links de Grupos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Grupos (um por linha)</p>
-                <Textarea
-                  placeholder="Nome do Grupo | https://chat.whatsapp.com/abc123def456
-Outro Grupo | https://chat.whatsapp.com/def456ghi789"
-                  value={textAreaGrupos}
-                  onChange={(e) => setTextAreaGrupos(e.target.value)}
-                  rows={8}
-                  className="font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Formato: Nome do Grupo | https://chat.whatsapp.com/...
-                </p>
-              </div>
-              <Button 
-                onClick={handleSalvarGrupos}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Salvar Links de Grupos
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Lista de Grupos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Grupos Cadastrados ({gruposAquecimento.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {gruposAquecimento.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome do Grupo</TableHead>
-                      <TableHead>URL</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {gruposAquecimento.map((grupo) => (
-                      <TableRow key={grupo.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-primary" />
-                            <span className="font-medium">{grupo.nome}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <a 
-                            href={grupo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-primary hover:underline"
-                          >
-                            <LinkIcon className="h-4 w-4" />
-                            <span className="truncate max-w-xs font-mono text-sm">{grupo.url}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Números em Aquecimento */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              Números em Aquecimento
+              <Badge variant="secondary" className="ml-2">
+                {numerosFiltrados.length}
+              </Badge>
+            </CardTitle>
+            <Dialog open={modalAddNumero} onOpenChange={setModalAddNumero}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Número para Aquecimento</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="numero">Número WhatsApp *</Label>
+                    <Input
+                      id="numero"
+                      value={novoNumero.numero}
+                      onChange={(e) => setNovoNumero({...novoNumero, numero: e.target.value})}
+                      placeholder="+55 31 99999-9999"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="descricao">Observações</Label>
+                    <Textarea
+                      id="descricao"
+                      value={novoNumero.descricao}
+                      onChange={(e) => setNovoNumero({...novoNumero, descricao: e.target.value})}
+                      placeholder="Observações sobre o aquecimento (opcional)"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setModalAddNumero(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleAddNumero}>
+                    Adicionar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            {numerosFiltrados.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Link WA</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {numerosFiltrados.map((numero) => (
+                    <TableRow key={numero.id}>
+                      <TableCell className="flex items-center gap-2">
+                        <Flame className="h-4 w-4 text-orange-500" />
+                        <span>{numero.numero}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyNumber(numero.numero)}
+                          className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <a href={gerarLinkWhatsApp(numero.numero)} target="_blank" rel="noopener noreferrer">
+                            <Link className="h-4 w-4 mr-1" />
+                            Abrir
                           </a>
-                        </TableCell>
-                        <TableCell>
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover o número {numero.numero} do aquecimento?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteNumero(numero.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum número em aquecimento</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setModalAddNumero(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar primeiro número
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Grupos Salvos */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5 text-blue-500" />
+              Grupos Salvos
+              <Badge variant="secondary" className="ml-2">
+                {gruposFiltrados.length}
+              </Badge>
+            </CardTitle>
+            <Dialog open={modalAddGrupo} onOpenChange={setModalAddGrupo}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Adicionar
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Grupo</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="nome-grupo">Nome do Grupo *</Label>
+                    <Input
+                      id="nome-grupo"
+                      value={novoGrupo.nome_grupo}
+                      onChange={(e) => setNovoGrupo({...novoGrupo, nome_grupo: e.target.value})}
+                      placeholder="Ex: Grupo VIP"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="url-grupo">Link do Grupo *</Label>
+                    <Input
+                      id="url-grupo"
+                      value={novoGrupo.url}
+                      onChange={(e) => setNovoGrupo({...novoGrupo, url: e.target.value})}
+                      placeholder="https://chat.whatsapp.com/..."
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setModalAddGrupo(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleAddGrupo}>
+                    Adicionar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            {gruposFiltrados.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gruposFiltrados.map((grupo) => (
+                    <TableRow key={grupo.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Link className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">{grupo.nome_grupo}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRemoverGrupo(grupo.id)}
-                            className="text-red-500 hover:text-red-600"
+                            asChild
+                            className="text-blue-600 hover:text-blue-700"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <a href={grupo.url} target="_blank" rel="noopener noreferrer">
+                              <Link className="h-4 w-4" />
+                            </a>
                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum grupo cadastrado ainda
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o grupo "{grupo.nome_grupo}"?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => deleteLinkGrupo(grupo.id)}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum grupo salvo</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setModalAddGrupo(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar primeiro grupo
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
