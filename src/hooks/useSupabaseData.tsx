@@ -49,12 +49,54 @@ export const useSupabaseData = () => {
   const [linksGrupos, setLinksGrupos] = useState<LinkGrupoData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carregar dados do usuário
-  const loadUserData = async () => {
+  // Função para garantir que o usuário existe na tabela usuarios
+  const ensureUserExists = async () => {
     if (!user) return;
 
     try {
+      const { data: existingUser, error: selectError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (selectError && selectError.code === 'PGRST116') {
+        // Usuário não existe, vamos criar
+        const { error: insertError } = await supabase
+          .from('usuarios')
+          .insert([{
+            id: user.id,
+            nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário',
+            email: user.email || ''
+          }]);
+
+        if (insertError) {
+          console.error('Erro ao criar usuário:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar usuário:', error);
+    }
+  };
+
+  // Carregar dados do usuário
+  const loadUserData = async () => {
+    if (!user) {
+      setNumeros([]);
+      setProjetos([]);
+      setResponsaveis([]);
+      setLinksGrupos([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
       setLoading(true);
+      
+      // Garantir que o usuário existe
+      await ensureUserExists();
+
+      console.log('Carregando dados para o usuário:', user.id);
 
       // Carregar números
       const { data: numerosData, error: numerosError } = await supabase
@@ -65,7 +107,14 @@ export const useSupabaseData = () => {
 
       if (numerosError) {
         console.error('Erro ao carregar números:', numerosError);
-        toast.error('Erro ao carregar dados dos números');
+        toast.error('Erro ao carregar números');
+      } else {
+        console.log('Números carregados:', numerosData);
+        const typedNumerosData = (numerosData || []).map(numero => ({
+          ...numero,
+          status: numero.status as 'ativo' | 'inativo' | 'suspenso' | 'api' | 'aquecendo'
+        }));
+        setNumeros(typedNumerosData);
       }
 
       // Carregar projetos
@@ -77,7 +126,10 @@ export const useSupabaseData = () => {
 
       if (projetosError) {
         console.error('Erro ao carregar projetos:', projetosError);
-        toast.error('Erro ao carregar dados dos projetos');
+        toast.error('Erro ao carregar projetos');
+      } else {
+        console.log('Projetos carregados:', projetosData);
+        setProjetos(projetosData || []);
       }
 
       // Carregar responsáveis
@@ -89,7 +141,10 @@ export const useSupabaseData = () => {
 
       if (responsaveisError) {
         console.error('Erro ao carregar responsáveis:', responsaveisError);
-        toast.error('Erro ao carregar dados dos responsáveis');
+        toast.error('Erro ao carregar responsáveis');
+      } else {
+        console.log('Responsáveis carregados:', responsaveisData);
+        setResponsaveis(responsaveisData || []);
       }
 
       // Carregar links de grupos
@@ -102,20 +157,13 @@ export const useSupabaseData = () => {
       if (linksError) {
         console.error('Erro ao carregar links de grupos:', linksError);
         toast.error('Erro ao carregar links de grupos');
+      } else {
+        console.log('Links de grupos carregados:', linksData);
+        setLinksGrupos(linksData || []);
       }
 
-      // Convertendo o status para o tipo esperado
-      const typedNumerosData = (numerosData || []).map(numero => ({
-        ...numero,
-        status: numero.status as 'ativo' | 'inativo' | 'suspenso' | 'api' | 'aquecendo'
-      }));
-
-      setNumeros(typedNumerosData);
-      setProjetos(projetosData || []);
-      setResponsaveis(responsaveisData || []);
-      setLinksGrupos(linksData || []);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro geral ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
     } finally {
       setLoading(false);
@@ -123,15 +171,7 @@ export const useSupabaseData = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      loadUserData();
-    } else {
-      setNumeros([]);
-      setProjetos([]);
-      setResponsaveis([]);
-      setLinksGrupos([]);
-      setLoading(false);
-    }
+    loadUserData();
   }, [user]);
 
   // Configurar realtime subscriptions
@@ -143,7 +183,10 @@ export const useSupabaseData = () => {
         .channel('numeros_changes')
         .on('postgres_changes', 
           { event: '*', schema: 'public', table: 'numeros', filter: `user_id=eq.${user.id}` },
-          () => loadUserData()
+          (payload) => {
+            console.log('Mudança em números:', payload);
+            loadUserData();
+          }
         )
         .subscribe(),
 
@@ -151,7 +194,10 @@ export const useSupabaseData = () => {
         .channel('projetos_changes')
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'projetos', filter: `user_id=eq.${user.id}` },
-          () => loadUserData()
+          (payload) => {
+            console.log('Mudança em projetos:', payload);
+            loadUserData();
+          }
         )
         .subscribe(),
 
@@ -159,7 +205,10 @@ export const useSupabaseData = () => {
         .channel('responsaveis_changes')
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'responsaveis', filter: `user_id=eq.${user.id}` },
-          () => loadUserData()
+          (payload) => {
+            console.log('Mudança em responsáveis:', payload);
+            loadUserData();
+          }
         )
         .subscribe(),
 
@@ -167,7 +216,10 @@ export const useSupabaseData = () => {
         .channel('links_grupos_changes')
         .on('postgres_changes',
           { event: '*', schema: 'public', table: 'links_grupos', filter: `user_id=eq.${user.id}` },
-          () => loadUserData()
+          (payload) => {
+            console.log('Mudança em links de grupos:', payload);
+            loadUserData();
+          }
         )
         .subscribe(),
     ];
@@ -179,9 +231,14 @@ export const useSupabaseData = () => {
 
   // Funções para manipular dados
   const addNumero = async (numero: Omit<NumeroData, 'id' | 'user_id' | 'criado_em' | 'mensagens'>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Adicionando número:', numero);
+      
       const { data, error } = await supabase
         .from('numeros')
         .insert([{ 
@@ -194,10 +251,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao adicionar número:', error);
-        toast.error('Erro ao adicionar número');
+        toast.error(`Erro ao adicionar número: ${error.message}`);
         return null;
       }
       
+      console.log('Número adicionado com sucesso:', data);
       toast.success('Número adicionado com sucesso!');
       return data as NumeroData;
     } catch (error) {
@@ -208,9 +266,14 @@ export const useSupabaseData = () => {
   };
 
   const updateNumero = async (id: string, updates: Partial<NumeroData>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Atualizando número:', id, updates);
+      
       const { data, error } = await supabase
         .from('numeros')
         .update(updates)
@@ -221,10 +284,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao atualizar número:', error);
-        toast.error('Erro ao atualizar número');
+        toast.error(`Erro ao atualizar número: ${error.message}`);
         return null;
       }
       
+      console.log('Número atualizado com sucesso:', data);
       toast.success('Número atualizado com sucesso!');
       return data as NumeroData;
     } catch (error) {
@@ -235,9 +299,14 @@ export const useSupabaseData = () => {
   };
 
   const deleteNumero = async (id: string) => {
-    if (!user) return false;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
+      console.log('Excluindo número:', id);
+      
       const { error } = await supabase
         .from('numeros')
         .delete()
@@ -246,10 +315,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao excluir número:', error);
-        toast.error('Erro ao excluir número');
+        toast.error(`Erro ao excluir número: ${error.message}`);
         return false;
       }
       
+      console.log('Número excluído com sucesso');
       toast.success('Número excluído com sucesso!');
       return true;
     } catch (error) {
@@ -260,9 +330,14 @@ export const useSupabaseData = () => {
   };
 
   const addProjeto = async (projeto: Omit<ProjetoData, 'id' | 'user_id' | 'criado_em'>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Adicionando projeto:', projeto);
+      
       const { data, error } = await supabase
         .from('projetos')
         .insert([{ ...projeto, user_id: user.id }])
@@ -271,10 +346,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao adicionar projeto:', error);
-        toast.error('Erro ao adicionar projeto');
+        toast.error(`Erro ao adicionar projeto: ${error.message}`);
         return null;
       }
       
+      console.log('Projeto adicionado com sucesso:', data);
       toast.success('Projeto adicionado com sucesso!');
       return data as ProjetoData;
     } catch (error) {
@@ -285,9 +361,14 @@ export const useSupabaseData = () => {
   };
 
   const updateProjeto = async (id: string, updates: Partial<ProjetoData>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Atualizando projeto:', id, updates);
+      
       const { data, error } = await supabase
         .from('projetos')
         .update(updates)
@@ -298,10 +379,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao atualizar projeto:', error);
-        toast.error('Erro ao atualizar projeto');
+        toast.error(`Erro ao atualizar projeto: ${error.message}`);
         return null;
       }
       
+      console.log('Projeto atualizado com sucesso:', data);
       toast.success('Projeto atualizado com sucesso!');
       return data as ProjetoData;
     } catch (error) {
@@ -312,9 +394,14 @@ export const useSupabaseData = () => {
   };
 
   const deleteProjeto = async (id: string) => {
-    if (!user) return false;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
+      console.log('Excluindo projeto:', id);
+      
       const { error } = await supabase
         .from('projetos')
         .delete()
@@ -323,10 +410,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao excluir projeto:', error);
-        toast.error('Erro ao excluir projeto');
+        toast.error(`Erro ao excluir projeto: ${error.message}`);
         return false;
       }
       
+      console.log('Projeto excluído com sucesso');
       toast.success('Projeto excluído com sucesso!');
       return true;
     } catch (error) {
@@ -337,9 +425,14 @@ export const useSupabaseData = () => {
   };
 
   const addResponsavel = async (responsavel: Omit<ResponsavelData, 'id' | 'user_id' | 'created_at'>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Adicionando responsável:', responsavel);
+      
       const { data, error } = await supabase
         .from('responsaveis')
         .insert([{ ...responsavel, user_id: user.id }])
@@ -348,10 +441,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao adicionar responsável:', error);
-        toast.error('Erro ao adicionar responsável');
+        toast.error(`Erro ao adicionar responsável: ${error.message}`);
         return null;
       }
       
+      console.log('Responsável adicionado com sucesso:', data);
       toast.success('Responsável adicionado com sucesso!');
       return data;
     } catch (error) {
@@ -362,9 +456,14 @@ export const useSupabaseData = () => {
   };
 
   const updateResponsavel = async (id: string, updates: Partial<ResponsavelData>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Atualizando responsável:', id, updates);
+      
       const { data, error } = await supabase
         .from('responsaveis')
         .update(updates)
@@ -375,10 +474,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao atualizar responsável:', error);
-        toast.error('Erro ao atualizar responsável');
+        toast.error(`Erro ao atualizar responsável: ${error.message}`);
         return null;
       }
       
+      console.log('Responsável atualizado com sucesso:', data);
       toast.success('Responsável atualizado com sucesso!');
       return data;
     } catch (error) {
@@ -389,9 +489,14 @@ export const useSupabaseData = () => {
   };
 
   const deleteResponsavel = async (id: string) => {
-    if (!user) return false;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
+      console.log('Excluindo responsável:', id);
+      
       const { error } = await supabase
         .from('responsaveis')
         .delete()
@@ -400,10 +505,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao excluir responsável:', error);
-        toast.error('Erro ao excluir responsável');
+        toast.error(`Erro ao excluir responsável: ${error.message}`);
         return false;
       }
       
+      console.log('Responsável excluído com sucesso');
       toast.success('Responsável excluído com sucesso!');
       return true;
     } catch (error) {
@@ -414,9 +520,14 @@ export const useSupabaseData = () => {
   };
 
   const addLinkGrupo = async (linkGrupo: Omit<LinkGrupoData, 'id' | 'user_id' | 'created_at'>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Adicionando link de grupo:', linkGrupo);
+      
       const { data, error } = await supabase
         .from('links_grupos')
         .insert([{ ...linkGrupo, user_id: user.id }])
@@ -425,10 +536,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao adicionar link de grupo:', error);
-        toast.error('Erro ao adicionar link de grupo');
+        toast.error(`Erro ao adicionar link de grupo: ${error.message}`);
         return null;
       }
       
+      console.log('Link de grupo adicionado com sucesso:', data);
       toast.success('Link de grupo adicionado com sucesso!');
       return data;
     } catch (error) {
@@ -439,9 +551,14 @@ export const useSupabaseData = () => {
   };
 
   const updateLinkGrupo = async (id: string, updates: Partial<LinkGrupoData>) => {
-    if (!user) return null;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
 
     try {
+      console.log('Atualizando link de grupo:', id, updates);
+      
       const { data, error } = await supabase
         .from('links_grupos')
         .update(updates)
@@ -452,10 +569,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao atualizar link de grupo:', error);
-        toast.error('Erro ao atualizar link de grupo');
+        toast.error(`Erro ao atualizar link de grupo: ${error.message}`);
         return null;
       }
       
+      console.log('Link de grupo atualizado com sucesso:', data);
       toast.success('Link de grupo atualizado com sucesso!');
       return data;
     } catch (error) {
@@ -466,9 +584,14 @@ export const useSupabaseData = () => {
   };
 
   const deleteLinkGrupo = async (id: string) => {
-    if (!user) return false;
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return false;
+    }
 
     try {
+      console.log('Excluindo link de grupo:', id);
+      
       const { error } = await supabase
         .from('links_grupos')
         .delete()
@@ -477,10 +600,11 @@ export const useSupabaseData = () => {
 
       if (error) {
         console.error('Erro ao excluir link de grupo:', error);
-        toast.error('Erro ao excluir link de grupo');
+        toast.error(`Erro ao excluir link de grupo: ${error.message}`);
         return false;
       }
       
+      console.log('Link de grupo excluído com sucesso');
       toast.success('Link de grupo excluído com sucesso!');
       return true;
     } catch (error) {
